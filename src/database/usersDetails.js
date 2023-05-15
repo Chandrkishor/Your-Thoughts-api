@@ -5,4 +5,8 @@ const getAllUsers = () => {
   return DB.usersDetails;
 };
 
-module.exports = { getAllUsers };
+const getUsersById = (id) => {
+  return DB.usersDetails.find((user) => user.id === Number(id));
+};
+
+module.exports = { getAllUsers, getUsersById };

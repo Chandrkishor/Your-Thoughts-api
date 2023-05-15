@@ -1,28 +1,29 @@
 const userDetailsService = require("../services/userDetails");
 
-const getAllUserDetails = (req, res) => {
-  const allUsers = userDetailsService.getAllUserDetails();
-  res.send({ status: "OK", data: allUsers });
+const getAllUserDetails = async (req, res) => {
+  const allUsers = await userDetailsService.getAllUserDetails();
+  res.status(200).json(allUsers);
 };
 
 const getOneUserDetail = (req, res) => {
-  const userDetails = userDetailsService.getOneUserDetail();
-  res.send("Get an existing UserDetail");
+  const userDetails = userDetailsService.getOneUserDetail(req.params.userId);
+  res.send({ status: "OK", data: userDetails });
 };
 
-const createNewUserDetail = (req, res) => {
-  const createUser = userDetailsService.createNewUserDetail();
-  res.send("Create a new UserDetail");
+const createNewUserDetail = async (req, res) => {
+  let body = req.body;
+  const createUser = await userDetailsService.createNewUserDetail(body);
+  res.status(200).json(createUser);
 };
 
 const updateOneUserDetail = (req, res) => {
   const updateUser = userDetailsService.updateOneUserDetail();
-  res.send("Update an existing UserDetail");
+  res.send({ status: "OK", data: updateUser });
 };
 
 const deleteOneUserDetail = (req, res) => {
   const deleteUser = userDetailsService.deleteOneUserDetail();
-  res.send("Delete an existing UserDetail");
+  res.send({ status: "OK", data: deleteUser });
 };
 
 module.exports = {
