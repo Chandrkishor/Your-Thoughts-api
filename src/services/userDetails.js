@@ -1,5 +1,5 @@
-const UserDet = require("../database/usersDetails");
-const User = require("../modals/userModal");
+const User = require("../modals/users/userModal");
+const Login = require("../modals/users/loginModal");
 
 const getAllUserDetails = () => {
   // for dummy data (JSON)
@@ -41,8 +41,13 @@ const updateOneUserDetail = () => {
 const deleteOneUserDetail = () => {
   return;
 };
+const userLogin = (body) => {
+  console.log("userLogin ~ body: >>", body);
+  return body;
+};
 
 module.exports = {
+  userLogin,
   getAllUserDetails,
   getOneUserDetail,
   createNewUserDetail,

@@ -1,5 +1,11 @@
 const userDetailsService = require("../services/userDetails");
 
+const userLogin = async (req, res) => {
+  let body = req.body;
+  const login = await userDetailsService.userLogin(body);
+  res.status(200).json(login);
+};
+
 const getAllUserDetails = async (req, res) => {
   const allUsers = await userDetailsService.getAllUserDetails();
   res.status(200).json(allUsers);
@@ -27,6 +33,7 @@ const deleteOneUserDetail = (req, res) => {
 };
 
 module.exports = {
+  userLogin,
   getAllUserDetails,
   getOneUserDetail,
   createNewUserDetail,

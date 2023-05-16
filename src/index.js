@@ -1,5 +1,6 @@
 const express = require("express");
 const v1UserRoute = require("./v1/routes/userDetails");
+const crateAndLogin = require("./v1/routes/userCreateLogin");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const bodyParser = require("body-parser");
@@ -24,6 +25,7 @@ mongoose
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use("/api/v1", crateAndLogin);
 app.use("/api/v1/userDetails", v1UserRoute);
 
 app.listen(PORT, () => {
