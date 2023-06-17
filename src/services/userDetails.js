@@ -1,5 +1,4 @@
 const User = require("../modals/users/userModal");
-const Login = require("../modals/users/loginModal");
 
 const getAllUserDetails = () => {
   // for dummy data (JSON)
