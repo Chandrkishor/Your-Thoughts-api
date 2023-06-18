@@ -1,36 +1,29 @@
 const User = require("../modals/users/userModal");
 
-const getAllUserDetails = () => {
-  // for dummy data (JSON)
-  // const userDetails = UserDet.getAllUsers();
-  User.find()
-    .then((users) => {
-      console.log(".then ~ users: >>", users);
-      return users;
-    })
-    .catch((error) => {
-      console.log("getAllUserDetails ~ error: >>", error);
-      return error;
-    });
+const getAllUserDetails = async () => {
+  try {
+    const users = await User.find().select(
+      "-password -isAdmin -createdAt -updatedAt",
+    );
+    return users;
+  } catch (error) {
+    console.log("getAllUserDetails ~ error: >>", error);
+    throw new Error(error);
+  }
+
   // return userDetails;
 };
 
 const getOneUserDetail = (id) => {
-  const userDetails = UserDet.getUsersById(id);
-
-  return userDetails;
-};
-
-const createNewUserDetail = (body) => {
-  User.create(body)
-    .then((createdUser) => {
-      console.log("User created:", createdUser);
-      return createdUser;
-    })
-    .catch((error) => {
-      console.error("Error creating user:", error);
-      return;
-    });
+  try {
+    const userDetails = User.findById(id).select(
+      "-password -isAdmin -createdAt",
+    );
+    return userDetails;
+  } catch (error) {
+    console.log("get user ~ error: >>", error);
+    throw new Error(error);
+  }
 };
 
 const updateOneUserDetail = () => {
@@ -40,16 +33,10 @@ const updateOneUserDetail = () => {
 const deleteOneUserDetail = () => {
   return;
 };
-const userLogin = (body) => {
-  console.log("userLogin ~ body: >>", body);
-  return body;
-};
 
 module.exports = {
-  userLogin,
   getAllUserDetails,
   getOneUserDetail,
-  createNewUserDetail,
   updateOneUserDetail,
   deleteOneUserDetail,
 };
