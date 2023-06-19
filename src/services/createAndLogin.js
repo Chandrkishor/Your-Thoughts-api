@@ -78,18 +78,17 @@ const login = async (body) => {
     }
     const user = await User.findOne({ email });
     // console.log("login ~ user: >>", user);
-
-    if (!user) {
-      return { status: 404, message: "User not found!!!" };
-    }
-
     const isMatch = await compareAndHashPasswords(password, user?.password);
 
-    if (!isMatch) {
+    if (!user || !isMatch) {
       return { status: 401, message: "Invalid email or password!!!" };
     }
+
     const secretKey = process.env.SECRET_KEY;
-    const token = jwt.sign({ userId: user._id, email: user.email }, secretKey);
+    const token = jwt.sign({ userId: user._id, email: user.email }, secretKey, {
+      expiresIn: 60 * 60 * 24 * 30, // 30 days
+      // expiresIn: 60, // 60 sec
+    });
 
     return { status: 200, message: "Login successfully", token };
   } catch (error) {

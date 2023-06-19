@@ -54,16 +54,22 @@ const verifyToken = async (req, res, next) => {
   token = authHeader?.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "No token provided" });
+    return res.status(401).json({ message: "Invalid or expired access token" });
   }
 
   try {
     const decodedToken = await jwt.verify(token, secretKey);
-    console.log("verifyToken ~ decodedToken: >>", decodedToken);
+    const remainingTime = decodedToken.exp * 1000 - Date.now();
+
+    // Token has expired
+    if (remainingTime < 0) {
+      // res.redirect("/login");
+      return res.status(401).json({ message: "Token expired" });
+    }
     req.user = decodedToken;
     next();
   } catch (error) {
-    if (error instanceof JsonWebTokenError) {
+    if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ message: "Invalid token" });
     }
     return res.status(500).json({ message: "Internal server error" });
