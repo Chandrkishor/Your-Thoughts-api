@@ -83,8 +83,8 @@ const verifyMail = async (email, name, vlink = "no LINK FOR NOW") => {
       host: "smtp.ethereal.email",
       port: 587,
       auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EPASS,
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
     let template = `<html>
@@ -121,6 +121,7 @@ const verifyMail = async (email, name, vlink = "no LINK FOR NOW") => {
       data: sendReciept,
     };
   } catch (error) {
+    console.log("verifyMail ~ error: >>", error);
     return { status: 400, message: "Error sending email!!! " };
   }
 };

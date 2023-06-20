@@ -54,16 +54,24 @@ const registerUser = async (body) => {
 
   //? The user is an administrator, so save without checking isAdmin permission true or false
   if (isAdminAccess) {
-    await newUser.save().then((data) => {
-      let mailResponse = verifyMail(email, name, "no LINK to verify");
+    await newUser.save().then(async (data) => {
+      let mailResponse = await verifyMail(
+        email,
+        "Jaquan Hirthe",
+        "no LINK to verify",
+      );
       console.log("awaitnewUser.save ~ mailResponse: >>", mailResponse);
     });
   } else {
     if (newUser.isAdmin) {
       return { status: 401, message: "Unauthorized!!!" };
     } else
-      await newUser.save().then((data) => {
-        let mailResponse = verifyMail(email, name, "no LINK to verify");
+      await newUser.save().then(async (data) => {
+        let mailResponse = await verifyMail(
+          email,
+          "Jaquan Hirthe",
+          "no LINK to verify",
+        );
         console.log("awaitnewUser.save ~ mailResponse: >>", mailResponse);
       });
   }
