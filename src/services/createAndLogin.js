@@ -1,5 +1,5 @@
 const User = require("../modals/users/userModal");
-const { compareAndHashPasswords } = require("../utils");
+const { compareAndHashPasswords, verifyMail } = require("../utils");
 const jwt = require("jsonwebtoken");
 
 const registerUser = async (body) => {
@@ -13,7 +13,7 @@ const registerUser = async (body) => {
     image,
     imageType,
     imageSize,
-    isAdminAccess = false,
+    isAdminAccess,
   } = body;
   email = email?.toLowerCase();
   gender = gender?.toLowerCase();
@@ -39,25 +39,33 @@ const registerUser = async (body) => {
   //? 2.  save() is used for both creating new documents and updating existing ones, with additional options available for customization.
   // Create a new user
   const newUser = new User({
+    age,
     name,
     email,
-    password: hashPassword,
-    age,
+    image,
     gender,
     contact,
-    image,
     imageType,
     imageSize,
     isAdmin: false,
+    password: hashPassword,
+    isEmailVerified: false,
   });
 
   //? The user is an administrator, so save without checking isAdmin permission true or false
   if (isAdminAccess) {
-    await newUser.save();
+    await newUser.save().then((data) => {
+      let mailResponse = verifyMail(email, name, "no LINK to verify");
+      console.log("awaitnewUser.save ~ mailResponse: >>", mailResponse);
+    });
   } else {
     if (newUser.isAdmin) {
       return { status: 401, message: "Unauthorized!!!" };
-    } else await newUser.save();
+    } else
+      await newUser.save().then((data) => {
+        let mailResponse = verifyMail(email, name, "no LINK to verify");
+        console.log("awaitnewUser.save ~ mailResponse: >>", mailResponse);
+      });
   }
   // Return a success response
   return {
@@ -70,14 +78,14 @@ const login = async (body) => {
   try {
     let { email, password } = body;
     email = email?.toLowerCase();
-    if (!email || !password) {
+    if (!email && !password) {
       return {
         status: 400,
         message: "Email and password are required fields!!!",
       };
     }
     const user = await User.findOne({ email });
-    // console.log("login ~ user: >>", user);
+    console.log("login ~ user: >>", user);
     const isMatch = await compareAndHashPasswords(password, user?.password);
 
     if (!user || !isMatch) {

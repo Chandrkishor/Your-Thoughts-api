@@ -2,6 +2,7 @@ const sharp = require("sharp");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 
 //! Function to convert HEIC to JPEG
 //? how to use above function to convert
@@ -76,8 +77,57 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
+const verifyMail = async (email, name, vlink = "no LINK FOR NOW") => {
+  try {
+    let transporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EPASS,
+      },
+    });
+    let template = `<html>
+                        <head>
+                        <meta charset="UTF-8">
+                        <title>Email Verification</title>
+                        </head>
+                        <body>
+                        <div style="text-align: center;">
+                            <h2>Email Verification</h2>
+                            <p>Hello, {{name}}!</p>
+                            <p>Thank you for registering! Please click the link below to verify your email address:</p>
+                            <p>
+                            <a href="{{verification_link}}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none;">Verify Email</a>
+                            </p>
+                            <p>If you didn't sign up for this account, you can safely ignore this email.</p>
+                        </div>
+                        </body>
+                        </html>`;
+
+    let mailDetails = {
+      from: process.env.EMAIL,
+      to: email,
+      subject: "Email verification for Binary bits",
+      text: "That was easy!",
+      html: template
+        .replace("{{verification_link}}", vlink)
+        .replace("{{name}}", name),
+    };
+    let sendReciept = await transporter.sendMail(mailDetails);
+    return {
+      status: 200,
+      message: `email has been sent for account verification `,
+      data: sendReciept,
+    };
+  } catch (error) {
+    return { status: 400, message: "Error sending email!!! " };
+  }
+};
+
 module.exports = {
   convertHeicToJpeg,
   compareAndHashPasswords,
   verifyToken,
+  verifyMail,
 };
