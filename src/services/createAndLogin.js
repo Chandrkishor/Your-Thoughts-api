@@ -1,6 +1,10 @@
 const User = require("../modals/users/userModal");
-const { compareAndHashPasswords, verifyMail } = require("../utils");
+const { compareAndHashPasswords, verifyMail, salting } = require("../utils");
 const jwt = require("jsonwebtoken");
+
+const API_BASEURL = process.env.API_BASEURL;
+const API_BASENAME = process.env.API_BASENAME;
+const API_BASEPATH = process.env.API_BASEPATH;
 
 const registerUser = async (body) => {
   let {
@@ -34,9 +38,7 @@ const registerUser = async (body) => {
   if (user) {
     return { status: 403, message: "The email address already exists." };
   }
-
-  //? 1. create() is a shortcut for creating new documents in the database.
-  //? 2.  save() is used for both creating new documents and updating existing ones, with additional options available for customization.
+  let saltToken = salting();
   // Create a new user
   const newUser = new User({
     age,
@@ -49,16 +51,18 @@ const registerUser = async (body) => {
     imageSize,
     isAdmin: false,
     password: hashPassword,
-    isEmailVerified: false,
+    isEmailVerifiedToken: saltToken,
+    // isEmailVerifiedToken: true,
   });
-
+  //? 1. create() is a shortcut for creating new documents in the database.
+  //? 2.  save() is used for both creating new documents and updating existing ones, with additional options available for customization.
   //? The user is an administrator, so save without checking isAdmin permission true or false
   if (isAdminAccess) {
-    await newUser.save().then(async (data) => {
+    await newUser.save().then(async () => {
       let mailResponse = await verifyMail(
         email,
-        "Jaquan Hirthe",
-        "no LINK to verify",
+        name,
+        `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${saltToken}`,
       );
       console.log("awaitnewUser.save ~ mailResponse: >>", mailResponse);
     });
@@ -66,11 +70,11 @@ const registerUser = async (body) => {
     if (newUser.isAdmin) {
       return { status: 401, message: "Unauthorized!!!" };
     } else
-      await newUser.save().then(async (data) => {
+      await newUser.save().then(async () => {
         let mailResponse = await verifyMail(
           email,
-          "Jaquan Hirthe",
-          "no LINK to verify",
+          name,
+          `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${saltToken}`,
         );
         console.log("awaitnewUser.save ~ mailResponse: >>", mailResponse);
       });
@@ -78,7 +82,8 @@ const registerUser = async (body) => {
   // Return a success response
   return {
     status: 201,
-    message: `User created successfully.`,
+    // message: `User created successfully.`,
+    message: `created successfully!. Check your email: ${email}.`,
   };
 };
 
@@ -113,4 +118,32 @@ const login = async (body) => {
   }
 };
 
-module.exports = { login, registerUser };
+const emailToken = async (body) => {
+  try {
+    let { email, token } = body;
+    email = email?.toLowerCase();
+    if (!email && !token) {
+      return {
+        status: 400,
+        message: "Please click on correct link to verify your email",
+      };
+    }
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return { status: 400, message: "Invalid token" };
+    }
+    if (user?.token === true) {
+      return { status: 200, message: "Email already verifyed" };
+    } else if (user.token === token) {
+      return { status: 200, message: "Email verified sucessfully" };
+    } else {
+      return { status: 400, message: "Invalid Token" };
+    }
+  } catch (error) {
+    console.log("login ~ error: >>", error);
+    return { status: 500, message: "Internal server error" };
+  }
+};
+
+module.exports = { login, registerUser, emailToken };

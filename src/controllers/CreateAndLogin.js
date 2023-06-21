@@ -1,4 +1,5 @@
 const CreateUser = require("../services/createAndLogin");
+const { salting } = require("../utils");
 
 const isAdmin = (req) => {
   // Get the user from the request headers
@@ -35,4 +36,15 @@ const userLogin = async (req, res) => {
   });
 };
 
-module.exports = { registerUser, userLogin };
+const verifyEmail = async (req, res) => {
+  let params = req?.params?.link;
+  if (!req?.params.link?.length) {
+    res.status(400).json({ message: "Invalid token" });
+  }
+  const tokenReponse = await CreateUser.emailToken(params);
+  res
+    .status(tokenReponse?.status ?? 200)
+    .json({ message: tokenReponse?.message ?? "email verified" });
+};
+
+module.exports = { registerUser, userLogin, verifyEmail };

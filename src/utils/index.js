@@ -21,9 +21,9 @@ async function convertHeicToJpeg(heicBuffer) {
 //!
 // const isMatch = await bcrypt.compare(password, hashPassword);
 // const salt = crypto.randomBytes(16).toString("hex");
-async function salting() {
+function salting() {
   try {
-    const salt = await crypto.randomBytes(16).toString("hex");
+    const salt = crypto.randomBytes(16).toString("hex");
     return salt;
   } catch (error) {
     console.error("Salting failed:", error);
@@ -34,9 +34,9 @@ async function salting() {
 async function compareAndHashPasswords(password, passwordHash, type = null) {
   try {
     if (type === "hashPassword") {
-      const salt = await salting();
+      const salt = salting();
       //? bcrypt.hashSync()	Hashes the password immediately and returns the hash.	where bcrypt.hash() Hashes the password asynchronously and returns a promise.
-      const hashPassword = await bcrypt.hashSync(password, 12, salt);
+      const hashPassword = bcrypt.hashSync(password, 12, salt);
       return hashPassword;
     } else {
       const match = await bcrypt.compare(password, passwordHash);
@@ -45,7 +45,6 @@ async function compareAndHashPasswords(password, passwordHash, type = null) {
   } catch (error) {
     console.error("Error comparing passwords:", error);
     throw error;
-    // return false;
   }
 }
 
@@ -131,4 +130,5 @@ module.exports = {
   compareAndHashPasswords,
   verifyToken,
   verifyMail,
+  salting,
 };
