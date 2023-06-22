@@ -1,5 +1,4 @@
 const CreateUser = require("../services/createAndLogin");
-const { salting } = require("../utils");
 
 const isAdmin = (req) => {
   // Get the user from the request headers
