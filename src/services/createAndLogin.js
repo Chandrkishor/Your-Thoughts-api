@@ -1,10 +1,14 @@
 const User = require("../modals/users/userModal");
 const { compareAndHashPasswords, verifyMail, salting } = require("../utils");
 const jwt = require("jsonwebtoken");
-
+require("dotenv").config();
+//
 const API_BASEURL = process.env.API_BASEURL;
+const UI_BASEURL = process.env.UI_BASEURL;
+// console.log("API_BASEURL: >>", API_BASEURL);
 const API_BASENAME = process.env.API_BASENAME;
 const API_BASEPATH = process.env.API_BASEPATH;
+const secretKey = process.env.SECRET_KEY;
 
 const registerUser = async (body) => {
   let {
@@ -38,7 +42,9 @@ const registerUser = async (body) => {
   if (user) {
     return { status: 403, message: "The email address already exists." };
   }
-  let saltToken = salting();
+  const saltToken = jwt.sign({ email: email }, secretKey, {
+    expiresIn: 60 * 60 * 24, // 30 days
+  });
   // Create a new user
   const newUser = new User({
     age,
@@ -51,8 +57,7 @@ const registerUser = async (body) => {
     imageSize,
     isAdmin: false,
     password: hashPassword,
-    isEmailVerifiedToken: saltToken,
-    // isEmailVerifiedToken: true,
+    isEmailVerifiedToken: false,
   });
   //? 1. create() is a shortcut for creating new documents in the database.
   //? 2.  save() is used for both creating new documents and updating existing ones, with additional options available for customization.
@@ -76,7 +81,6 @@ const registerUser = async (body) => {
           name,
           `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${saltToken}`,
         );
-        console.log("awaitnewUser.save ~ mailResponse: >>", mailResponse);
       });
   }
   // Return a success response
@@ -98,14 +102,12 @@ const login = async (body) => {
       };
     }
     const user = await User.findOne({ email });
-    console.log("login ~ user: >>", user);
     const isMatch = await compareAndHashPasswords(password, user?.password);
 
     if (!user || !isMatch) {
       return { status: 401, message: "Invalid email or password!!!" };
     }
 
-    const secretKey = process.env.SECRET_KEY;
     const token = jwt.sign({ userId: user._id, email: user.email }, secretKey, {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
       // expiresIn: 60, // 60 sec
@@ -120,23 +122,32 @@ const login = async (body) => {
 
 const emailToken = async (body) => {
   try {
-    let { email, token } = body;
-    email = email?.toLowerCase();
-    if (!email && !token) {
+    const decoded = jwt.verify(body, secretKey);
+    const email = decoded?.email;
+    if (!email) {
       return {
         status: 400,
-        message: "Please click on correct link to verify your email",
+        message: "Invalid Token",
       };
     }
     const user = await User.findOne({ email });
-
     if (!user) {
       return { status: 400, message: "Invalid token" };
     }
-    if (user?.token === true) {
-      return { status: 200, message: "Email already verifyed" };
-    } else if (user.token === token) {
-      return { status: 200, message: "Email verified sucessfully" };
+    if (user?.isEmailVerifiedToken === true) {
+      return {
+        status: 200,
+        message: "Email already verified",
+        website: `${UI_BASEURL}login`,
+      };
+    } else if (email?.length) {
+      await user.updateOne({ isEmailVerifiedToken: true });
+      return {
+        status: 200,
+        message: "Email verified sucessfully",
+        website: `${UI_BASEURL}login`,
+      };
+      // res.redirect(`${UI_BASEURL}login`);
     } else {
       return { status: 400, message: "Invalid Token" };
     }

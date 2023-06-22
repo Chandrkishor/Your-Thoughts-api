@@ -41,10 +41,15 @@ const verifyEmail = async (req, res) => {
   if (!req?.params.link?.length) {
     res.status(400).json({ message: "Invalid token" });
   }
-  const tokenReponse = await CreateUser.emailToken(params);
-  res
-    .status(tokenReponse?.status ?? 200)
-    .json({ message: tokenReponse?.message ?? "email verified" });
+  const tokenResponse = await CreateUser.emailToken(params);
+
+  if (tokenResponse?.website) {
+    res.redirect(tokenResponse.website);
+  } else {
+    res
+      .status(tokenResponse?.status ?? 200)
+      .json({ message: tokenResponse?.message ?? "" });
+  }
 };
 
 module.exports = { registerUser, userLogin, verifyEmail };

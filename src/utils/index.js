@@ -10,7 +10,6 @@ const nodemailer = require("nodemailer");
 async function convertHeicToJpeg(heicBuffer) {
   try {
     const jpegBuffer = await sharp(heicBuffer).jpeg().toBuffer();
-
     return jpegBuffer;
   } catch (error) {
     console.error("Error converting HEIC to JPEG:", error);
@@ -76,7 +75,7 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-const verifyMail = async (email, name, vlink = "no LINK FOR NOW") => {
+const verifyMail = async (email, name, vlink = "null") => {
   try {
     let transporter = nodemailer.createTransport({
       host: "smtp.ethereal.email",
@@ -105,7 +104,7 @@ const verifyMail = async (email, name, vlink = "no LINK FOR NOW") => {
                         </html>`;
 
     let mailDetails = {
-      from: process.env.EMAIL,
+      from: process.env.EMAIL_USER,
       to: email,
       subject: "Email verification for Binary bits",
       text: "That was easy!",
