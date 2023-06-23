@@ -112,11 +112,11 @@ const verifyMail = async (email, name, vlink = "null") => {
         .replace("{{verification_link}}", vlink)
         .replace("{{name}}", name),
     };
-    let sendReciept = await transporter.sendMail(mailDetails);
+    let sendReceipt = await transporter.sendMail(mailDetails);
     return {
       status: 200,
       message: `email has been sent for account verification `,
-      data: sendReciept,
+      data: sendReceipt,
     };
   } catch (error) {
     console.log("verifyMail ~ error: >>", error);

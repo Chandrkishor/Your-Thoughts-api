@@ -69,7 +69,6 @@ const registerUser = async (body) => {
         name,
         `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${saltToken}`,
       );
-      console.log("awaitnewUser.save ~ mailResponse: >>", mailResponse);
     });
   } else {
     if (newUser.isAdmin) {
@@ -144,7 +143,7 @@ const emailToken = async (body) => {
       await user.updateOne({ isEmailVerifiedToken: true });
       return {
         status: 200,
-        message: "Email verified sucessfully",
+        message: "Email verified successfully",
         website: `${UI_BASEURL}login`,
       };
       // res.redirect(`${UI_BASEURL}login`);
