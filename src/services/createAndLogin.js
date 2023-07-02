@@ -106,13 +106,23 @@ const login = async (body) => {
     if (!user || !isMatch) {
       return { status: 401, message: "Invalid email or password!!!" };
     }
+    let userDetails = {
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      age: user.age,
+      gender: user.gender,
+      contact: user.contact,
+      isAdmin: user.isAdmin,
+      isEmailVerifiedToken: user.isEmailVerifiedToken,
+    };
 
     const token = jwt.sign({ userId: user._id, email: user.email }, secretKey, {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
       // expiresIn: 60, // 60 sec
     });
 
-    return { status: 200, message: "Login successfully", token };
+    return { status: 200, message: "Login successfully", token, userDetails };
   } catch (error) {
     console.log("login ~ error: >>", error);
     return { status: 500, message: "Internal server error" };

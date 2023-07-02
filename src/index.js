@@ -6,6 +6,8 @@ require("dotenv").config();
 const bodyParser = require("body-parser");
 const { verifyToken } = require("./utils");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 // MongoDB Cloud connection URL
@@ -22,10 +24,10 @@ mongoose
   });
 
 // Use the body-parser middleware
+app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
-
 app.use("/api/v1", crateAndLogin);
 app.use("/api/v1/userDetails", verifyToken, v1UserRoute);
 

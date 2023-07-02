@@ -29,9 +29,18 @@ const registerUser = async (req, res) => {
 const userLogin = async (req, res) => {
   let body = req.body;
   const userLogin = await CreateUser.login(body);
+
+  await res.cookie("access_Token", userLogin.token, {
+    secure: false,
+    withCredentials: true,
+    httpOnly: false,
+    sameSite: "Lax",
+  });
+
   res.status(userLogin?.status || 400).json({
     message: userLogin?.message || "Something went wrong!!!",
-    token: userLogin?.token || null,
+    user: userLogin?.userDetails || null,
+    token: userLogin.token,
   });
 };
 
