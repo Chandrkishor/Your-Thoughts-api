@@ -28,17 +28,17 @@ const userSchema = new mongoose.Schema({
   },
   age: {
     type: Number,
-    required: true,
+    // required: true,
     min: 5,
   },
   gender: {
     type: String,
     enum: ["male", "female", "other"],
-    required: true,
+    // required: true,
   },
   contact: {
     type: String,
-    required: true,
+    // required: true,
     minlength: 10,
     maxlength: 10,
     validate: {

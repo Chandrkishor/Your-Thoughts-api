@@ -23,7 +23,7 @@ const registerUser = async (req, res) => {
   // Return a success response
   res
     .status(createUser?.status || 400)
-    .json(createUser?.message || "Something went wrong!!!");
+    .json({ message: createUser?.message || "Something went wrong!!!" });
 };
 
 const userLogin = async (req, res) => {

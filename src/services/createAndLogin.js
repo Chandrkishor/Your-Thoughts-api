@@ -26,8 +26,8 @@ const registerUser = async (body) => {
   email = email?.toLowerCase();
   gender = gender?.toLowerCase();
 
-  //? field validation checkings";
-  if (!name || !email || !password || !age || !gender) {
+  //? field validation checking";
+  if (!name || !email || !password || !age) {
     return { status: 400, message: "Please enter all required fields." };
   }
 
