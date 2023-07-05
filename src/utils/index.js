@@ -106,7 +106,7 @@ const verifyMail = async (email, name, vlink = "null") => {
     let mailDetails = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Email verification for Binary bits",
+      subject: "Your Thoughts email verification",
       text: "That was easy!",
       html: template
         .replace("{{verification_link}}", vlink)

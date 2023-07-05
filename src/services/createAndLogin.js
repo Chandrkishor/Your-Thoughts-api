@@ -31,13 +31,14 @@ const registerUser = async (body) => {
     return { status: 400, message: "Please enter all required fields." };
   }
 
+  //* a function which compare and generates hash for passwords
   const hashPassword = await compareAndHashPasswords(
     password,
     null,
     "hashPassword",
   );
 
-  // Check if the email address already exists
+  //* Check if the email address already exists
   const user = await User.findOne({ email: email });
   if (user) {
     return { status: 403, message: "The email address already exists." };
@@ -61,10 +62,10 @@ const registerUser = async (body) => {
   });
   //? 1. create() is a shortcut for creating new documents in the database.
   //? 2.  save() is used for both creating new documents and updating existing ones, with additional options available for customization.
-  //? The user is an administrator, so save without checking isAdmin permission true or false
+  //? The user is an administrator, so save without checking isAdmin permission true or false, if not and still getting true then give unauthenticated access message
   if (isAdminAccess) {
     await newUser.save().then(async () => {
-      let mailResponse = await verifyMail(
+      await verifyMail(
         email,
         name,
         `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${saltToken}`,
@@ -75,7 +76,7 @@ const registerUser = async (body) => {
       return { status: 401, message: "Unauthorized!!!" };
     } else
       await newUser.save().then(async () => {
-        let mailResponse = await verifyMail(
+        await verifyMail(
           email,
           name,
           `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${saltToken}`,
