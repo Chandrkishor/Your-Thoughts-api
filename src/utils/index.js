@@ -49,20 +49,18 @@ async function compareAndHashPasswords(password, passwordHash, type = null) {
 
 const verifyToken = async (req, res, next) => {
   const secretKey = process.env.SECRET_KEY;
-  const authHeader = req?.headers?.authorization;
-  token = authHeader?.split(" ")[1];
+  const token = req.cookies.access_Token;
 
   if (!token) {
     return res.status(401).json({ message: "Invalid or expired access token" });
   }
 
   try {
-    const decodedToken = await jwt.verify(token, secretKey);
+    const decodedToken = jwt.verify(token, secretKey);
     const remainingTime = decodedToken.exp * 1000 - Date.now();
 
     // Token has expired
     if (remainingTime < 0) {
-      // res.redirect("/login");
       return res.status(401).json({ message: "Token expired" });
     }
     req.user = decodedToken;
