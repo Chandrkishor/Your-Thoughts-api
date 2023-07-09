@@ -7,17 +7,20 @@ const getAllUserDetails = async (req, res) => {
 
 const getOneUserDetail = async (req, res) => {
   const id = req.params?.userId;
-  const user = await userDetailsService.getOneUserDetail(id);
+  const Requester = req?.user ?? null;
+  const user = await userDetailsService.getOneUserDetail(id, Requester?.userId);
   res.status(user.status).json(user.data);
 };
 
 const updateOneUserDetail = async (req, res) => {
   const { userId } = req.params;
-  const { name, email, age, gender } = req.body;
-  const newBody = { name, email, age, gender };
+  const { name, dob, gender } = req.body;
+  if (!name && !dob && !gender) {
+    return res.status(400).json({ message: "Required data missing" });
+  }
   const updateUser = await userDetailsService.updateOneUserDetail(
     userId,
-    newBody,
+    req.body,
   );
   res.status(updateUser.status).json(updateUser.data);
 };

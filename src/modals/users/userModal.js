@@ -11,34 +11,51 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     minlength: 8,
-    validate: {
-      validator: function (value) {
-        // Password validation regex (at least one special character)
-        return /^(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{8,}$/.test(
-          value,
-        );
-      },
-      message:
-        "Password should be at least 8 characters long and contain at least one special character.",
-    },
   },
   name: {
     type: String,
     required: true,
   },
-  age: {
-    type: Number,
-    // required: true,
-    min: 5,
+  dob: {
+    // type: Date, // Consider using the Date type for storing date of birth
+    type: String, // Consider using the Date type for storing date of birth
   },
-  gender: {
+  bio: {
     type: String,
-    enum: ["male", "female", "other"],
+  },
+  address: {
+    type: String,
+  },
+  website: {
+    type: String,
+    validate: {
+      validator: function (value) {
+        // Website URL validation regex
+        return /^(ftp|http|https):\/\/[^ "]+$/.test(value);
+      },
+      message: "Invalid website URL.",
+    },
+  },
+  linkedin: {
+    type: String,
+    validate: {
+      validator: function (value) {
+        // LinkedIn URL validation regex
+        return /^(ftp|http|https):\/\/[^ "]+$/.test(value);
+      },
+      message: "Invalid LinkedIn URL.",
+    },
+  },
+  // gender: {
+  //   type: String,
+  //   enum: ["male", "female", "other"],
+  // },
+  gender: {
+    type: Object,
     // required: true,
   },
   contact: {
     type: String,
-    // required: true,
     minlength: 10,
     maxlength: 10,
     validate: {
@@ -58,9 +75,6 @@ const userSchema = new mongoose.Schema({
       },
       message: "Invalid image format. Only PNG and JPEG images are allowed.",
     },
-  },
-  imageType: {
-    type: String,
   },
   imageSize: {
     type: Number,

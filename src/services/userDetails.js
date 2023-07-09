@@ -12,15 +12,18 @@ const getAllUserDetails = async () => {
   } catch (error) {
     throw new Error(error);
   }
-
   // return userDetails;
 };
 
-const getOneUserDetail = async (id) => {
+const getOneUserDetail = async (id, userId) => {
   try {
+    // if user have multiple fields in collection in that case we can get selected data only base on the isAdmin
     const userDetails = await User.findById(id).select(
-      "-password -isAdmin -createdAt",
+      "-password -isEmailVerifiedToken -createdAt",
     );
+    if (userDetails && userDetails._id.toString() === userId) {
+      userDetails.isAdmin = true;
+    }
     return {
       status: 200,
       data: userDetails,
@@ -35,7 +38,7 @@ const updateOneUserDetail = async (id, body) => {
     //? { new: true } option as the third parameter to findOneAndUpdate to ensure that the updated user details are returned.
     const userDetails = await User.findOneAndUpdate({ _id: id }, body, {
       new: true,
-    }).select("-password -isAdmin -createdAt");
+    }).select("-password -isAdmin --isEmailVerifiedToken -createdAt");
     return {
       status: 200,
       message: "User updated successfully",
@@ -49,7 +52,7 @@ const updateOneUserDetail = async (id, body) => {
 const deleteOneUser = async (id) => {
   try {
     const deletedUser = await User.findOneAndDelete({ _id: id }).select(
-      "-password -isAdmin -updatedAt",
+      "-password --isEmailVerifiedToken -updatedAt",
     );
     if (!deletedUser) {
       return {
