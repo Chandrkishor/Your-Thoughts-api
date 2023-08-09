@@ -42,6 +42,12 @@ const UploadImg = async (req, res) => {
   // const imageURL = uploadResult.secure_url;
 };
 
+app.use((err, req, res, next) => {
+  console.error(err); //for debugging purposes
+  // Send the error message as part of the response
+  res.status(err.status || 500).json({ error: err.message });
+});
+
 // Use the body-parser middleware
 app.use(cookieParser());
 app.use(bodyParser.json());
@@ -49,7 +55,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 app.use("/api/v1", crateAndLogin);
 app.use("/api/v1/img", UploadImg);
-app.use("/api/v1/userDetails", verifyToken, v1UserRoute);
+// app.use("/api/v1/userDetails", verifyToken, v1UserRoute);
+app.use("/api/v1/userDetails", v1UserRoute);
 
 app.listen(PORT, () => {
   console.log(`API is listening on port ${PORT}`);

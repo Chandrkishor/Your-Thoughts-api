@@ -1,21 +1,48 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
+const bcrypt = require("bcrypt");
 
 //** Define the user schema for sign up for login we don't need we just have to run some logic to verify and generate token
 const userSchema = new mongoose.Schema({
-  email: {
+  name: {
     type: String,
     required: true,
-    unique: true,
+    minlength: [2, "Name must have grater or equal than 2 characters"],
+    maxlength: [40, "Name must have less or equal than 40 characters"],
+    validate: {
+      validator: function (value) {
+        return validator.isAlphanumeric(value.replace(/\s/g, "")); // Removes spaces and checks if it's alphanumeric
+      },
+      message: "Name must be alphanumeric",
+    },
+  },
+  email: {
+    type: String,
+    required: [true, " Email is required"],
+    unique: [true, "should be unique"],
+    lowercase: true, // convert to lowercase
+    trim: true,
+    validate: [validator.isEmail, "Please enter a valid email"],
   },
   password: {
     type: String,
     required: true,
     minlength: 8,
+    select: false,
   },
-  name: {
+  confirmPassword: {
     type: String,
-    required: true,
+    required: [true, "Please confirm your password"],
+    validate: {
+      // it will worn in create and save only for update and all have use save if want to validate
+      validator: function (value) {
+        // here this is pointing the current document on new document creation
+        return value === this.password; // true, means no error
+      },
+      message: "Passwords are not same",
+    },
   },
+
   dob: {
     // type: Date, // Consider using the Date type for storing date of birth
     type: String, // Consider using the Date type for storing date of birth
@@ -52,7 +79,6 @@ const userSchema = new mongoose.Schema({
   // },
   gender: {
     type: Object,
-    // required: true,
   },
   contact: {
     type: String,
@@ -89,19 +115,24 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+    select: false,
   },
   updatedAt: {
     type: Date,
     default: Date.now,
+    select: false,
   },
-  isAdmin: {
+  isEmailVerified: {
     type: Boolean,
     default: false,
   },
-  isEmailVerifiedToken: {
-    type: Boolean,
-    default: false,
-  },
+});
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next(); // this will run if password is modified or created
+  this.password = await bcrypt.hash(this.password, 12); // hash the password cose of 12 so no need salting
+  this.confirmPassword = undefined; // delete the confirmPassword field
+  next();
 });
 
 //? Create the User model using the schema

@@ -1,18 +1,17 @@
-const User = require("../modals/users/userModal");
+const User = require("../modals/userModal");
 
 const getAllUserDetails = async () => {
   try {
-    const users = await User.find().select(
-      "-password -isAdmin -createdAt -updatedAt",
-    );
+    const users = await User.find();
     return {
       status: 200,
       data: users,
     };
-  } catch (error) {
-    throw new Error(error);
+  } catch (errors) {
+    const error = new Error(errors?.message);
+    error.status = 500;
+    throw error;
   }
-  // return userDetails;
 };
 
 const getOneUserDetail = async (id, userId) => {
