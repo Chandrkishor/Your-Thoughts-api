@@ -1,62 +1,37 @@
 const sharp = require("sharp");
-const bcrypt = require("bcrypt");
-const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const { EMAIL_USER, EMAIL_PASS, jwtSecret } = require("../constant");
 
-//! Function to convert HEIC to JPEG
-//? how to use above function to convert
-// const jpegBuffer = await convertHeicToJpeg(heicBuffer);
+// Function to convert HEIC to JPEG
 async function convertHeicToJpeg(heicBuffer) {
   try {
     const jpegBuffer = await sharp(heicBuffer).jpeg().toBuffer();
     return jpegBuffer;
   } catch (error) {
     console.error("Error converting HEIC to JPEG:", error);
-    throw error;
-  }
-}
-
-//!
-// const isMatch = await bcrypt.compare(password, hashPassword);
-// const salt = crypto.randomBytes(16).toString("hex");
-function salting() {
-  try {
-    const salt = crypto.randomBytes(16).toString("hex");
-    return salt;
-  } catch (error) {
-    console.error("Salting failed:", error);
-    throw error;
-  }
-}
-
-async function compareAndHashPasswords(password, passwordHash, type = null) {
-  try {
-    if (type === "hashPassword") {
-      const salt = salting();
-      //? bcrypt.hashSync()	Hashes the password immediately and returns the hash.	where bcrypt.hash() Hashes the password asynchronously and returns a promise.
-      const hashPassword = bcrypt.hashSync(password, 12, salt);
-      return hashPassword;
-    } else {
-      const match = await bcrypt.compare(password, passwordHash);
-      return match;
-    }
-  } catch (error) {
-    console.error("Error comparing passwords:", error);
-    throw error;
+    return error.message;
   }
 }
 
 const verifyToken = async (req, res, next) => {
-  const secretKey = process.env.SECRET_KEY;
-  const token = req.cookies.access_Token;
-
-  if (!token) {
-    return res.status(401).json({ message: "Invalid or expired access token" });
-  }
-
+  let token;
   try {
-    const decodedToken = jwt.verify(token, secretKey);
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+    // * second way to authenticate
+    // const token = req.cookies.access_Token;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "You are not logged in! Please log-in" });
+    }
+
+    const decodedToken = jwt.verify(token, jwtSecret);
     const remainingTime = decodedToken.exp * 1000 - Date.now();
 
     // Token has expired
@@ -69,7 +44,7 @@ const verifyToken = async (req, res, next) => {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ message: "Invalid token" });
     }
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -79,8 +54,8 @@ const verifyMail = async (email, name, vlink = "null") => {
       host: "smtp.ethereal.email",
       port: 587,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
       },
     });
     let template = `<html>
@@ -102,7 +77,7 @@ const verifyMail = async (email, name, vlink = "null") => {
                         </html>`;
 
     let mailDetails = {
-      from: process.env.EMAIL_USER,
+      from: EMAIL_USER,
       to: email,
       subject: "Your Thoughts email verification",
       text: "That was easy!",
@@ -124,8 +99,6 @@ const verifyMail = async (email, name, vlink = "null") => {
 
 module.exports = {
   convertHeicToJpeg,
-  compareAndHashPasswords,
   verifyToken,
   verifyMail,
-  salting,
 };

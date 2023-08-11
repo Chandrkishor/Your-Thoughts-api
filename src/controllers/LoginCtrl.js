@@ -1,3 +1,4 @@
+const { UI_BASEURL } = require("../constant");
 const CreateUser = require("../services/LoginSrv");
 
 const registerUser = async (req, res) => {
@@ -37,15 +38,15 @@ const userLogin = async (req, res) => {
     const body = { email, password };
     const userLogin = await CreateUser.login(body);
     await res.cookie("access_Token", userLogin.token, {
-      secure: false,
+      secure: false, // Set to true for production with HTTPS
       withCredentials: true,
       httpOnly: false,
       sameSite: "Lax",
+      maxAge: jwtExpire,
     });
 
-    res.status(userLogin?.status || 400).json({
-      message: userLogin?.message || "Something went wrong!!!",
-      user: userLogin?.userDetails || null,
+    res.status(userLogin?.status).json({
+      message: userLogin?.message,
       token: userLogin.token,
     });
   } catch (error) {
@@ -60,8 +61,8 @@ const verifyEmail = async (req, res) => {
   }
   const tokenResponse = await CreateUser.emailToken(params);
 
-  if (tokenResponse?.website) {
-    res.redirect(tokenResponse.website);
+  if (tokenResponse?.status === 200) {
+    res.redirect(`${UI_BASEURL}login`);
   } else {
     res
       .status(tokenResponse?.status ?? 200)

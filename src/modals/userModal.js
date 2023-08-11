@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
+const { jwtSecret, jwtExpire } = require("../constant");
+const jwt = require("jsonwebtoken");
 
 //** Define the user schema for sign up for login we don't need we just have to run some logic to verify and generate token
 const userSchema = new mongoose.Schema({
@@ -134,6 +136,19 @@ userSchema.pre("save", async function (next) {
   this.confirmPassword = undefined; // delete the confirmPassword field
   next();
 });
+
+//making instance and can be used any where
+userSchema.methods.isCorrectPassword = async function (
+  candidatePassword,
+  userPassword,
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+// Generate a JWT token for authentication
+userSchema.methods.generateAuthToken = function () {
+  return jwt.sign({ _id: this._id }, jwtSecret, { expiresIn: jwtExpire });
+};
 
 //? Create the User model using the schema
 const User = mongoose.model("User", userSchema);
