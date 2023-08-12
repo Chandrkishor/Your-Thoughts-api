@@ -37,13 +37,13 @@ const userLogin = async (req, res) => {
     }
     const body = { email, password };
     const userLogin = await CreateUser.login(body);
-    await res.cookie("access_Token", userLogin.token, {
-      secure: false, // Set to true for production with HTTPS
-      withCredentials: true,
-      httpOnly: false,
-      sameSite: "Lax",
-      maxAge: jwtExpire,
-    });
+    // await res.cookie("access_Token", userLogin.token, {
+    //   secure: false, // Set to true for production with HTTPS
+    //   withCredentials: true,
+    //   httpOnly: false,
+    //   sameSite: "Lax",
+    //   maxAge: jwtExpire,
+    // });
 
     res.status(userLogin?.status).json({
       message: userLogin?.message,

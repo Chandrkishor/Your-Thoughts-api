@@ -44,7 +44,9 @@ const userSchema = new mongoose.Schema({
       message: "Passwords are not same",
     },
   },
-
+  passwordChangedAt: {
+    type: Date,
+  },
   dob: {
     // type: Date, // Consider using the Date type for storing date of birth
     type: String, // Consider using the Date type for storing date of birth
@@ -148,6 +150,17 @@ userSchema.methods.isCorrectPassword = async function (
 // Generate a JWT token for authentication
 userSchema.methods.generateAuthToken = function () {
   return jwt.sign({ _id: this._id }, jwtSecret, { expiresIn: jwtExpire });
+};
+// After generating token if user changed password and someone try to login using same jwt token and to protect that.
+userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const passwordTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10,
+    );
+    return JWTTimestamp < passwordTimestamp;
+  }
+  return false; // false means no change
 };
 
 //? Create the User model using the schema

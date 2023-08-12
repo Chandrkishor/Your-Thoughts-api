@@ -1,7 +1,6 @@
 const sharp = require("sharp");
-const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const { EMAIL_USER, EMAIL_PASS, jwtSecret } = require("../constant");
+const { EMAIL_USER, EMAIL_PASS } = require("../constant");
 
 // Function to convert HEIC to JPEG
 async function convertHeicToJpeg(heicBuffer) {
@@ -13,40 +12,6 @@ async function convertHeicToJpeg(heicBuffer) {
     return error.message;
   }
 }
-
-const verifyToken = async (req, res, next) => {
-  let token;
-  try {
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-    }
-    // * second way to authenticate
-    // const token = req.cookies.access_Token;
-    if (!token) {
-      return res
-        .status(401)
-        .json({ message: "You are not logged in! Please log-in" });
-    }
-
-    const decodedToken = jwt.verify(token, jwtSecret);
-    const remainingTime = decodedToken.exp * 1000 - Date.now();
-
-    // Token has expired
-    if (remainingTime < 0) {
-      return res.status(401).json({ message: "Token expired" });
-    }
-    req.user = decodedToken;
-    next();
-  } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-    return res.status(error.status || 500).json({ message: error.message });
-  }
-};
 
 const verifyMail = async (email, name, vlink = "null") => {
   try {
@@ -99,6 +64,5 @@ const verifyMail = async (email, name, vlink = "null") => {
 
 module.exports = {
   convertHeicToJpeg,
-  verifyToken,
   verifyMail,
 };

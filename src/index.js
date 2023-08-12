@@ -4,7 +4,6 @@ const crateAndLogin = require("./v1/routes/userCreateLogin");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const bodyParser = require("body-parser");
-const { verifyToken } = require("./utils");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const {
@@ -14,6 +13,7 @@ const {
   API_SECRET,
   CLOUD_NAME,
 } = require("./constant");
+const { verifyToken } = require("./services/LoginSrv");
 const cloudinary = require("cloudinary").v2;
 
 const app = express();

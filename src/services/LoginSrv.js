@@ -2,7 +2,6 @@ const {
   API_BASEURL,
   API_BASENAME,
   API_BASEPATH,
-  UI_BASEURL,
   jwtSecret,
 } = require("../constant");
 const User = require("../modals/userModal");
@@ -50,19 +49,19 @@ const login = async (body) => {
       return { status: 401, message: "Invalid email or password!!!" };
     }
 
+    const token = user.generateAuthToken();
     if (!user.isEmailVerified) {
-      const verificationToken = user.generateAuthToken();
       await verifyMail(
         email,
         user?.name,
-        `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${verificationToken}`,
+        `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${token}`,
       );
       return {
         status: 403,
         message: `Check your email and verify: ${user.email}`,
       };
     }
-    const token = user.generateAuthToken();
+    // const token = user.generateAuthToken();
     return {
       status: 200,
       message: "Login successfully",
@@ -93,4 +92,45 @@ const emailToken = async (body) => {
   }
 };
 
-module.exports = { login, registerUser, emailToken };
+const verifyToken = async (req, res, next) => {
+  let token;
+  try {
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+    // * second way to authenticate
+    // const token = req.cookies.access_Token;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "You are not logged in! Please log-in" });
+    }
+
+    const decodedToken = jwt.verify(token, jwtSecret);
+    // this one to check if the user is not altered by someone\
+    const CurrentUser = await User.findById(decodedToken?._id);
+    if (!CurrentUser) {
+      return res
+        .status(401)
+        .json({ message: "The user belongings to this token does not exist" });
+    }
+    // this to check if the token is before password change or after
+    if (CurrentUser.changePasswordAfter(decodedToken.iat)) {
+      return res
+        .status(401)
+        .json({ message: "Password changed, Please login again" });
+    }
+    req.user = CurrentUser;
+    next();
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    return res.status(error.status || 500).json({ message: error.message });
+  }
+};
+
+module.exports = { login, registerUser, emailToken, verifyToken };
