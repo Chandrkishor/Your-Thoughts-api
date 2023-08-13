@@ -1,6 +1,12 @@
 const sharp = require("sharp");
 const nodemailer = require("nodemailer");
-const { EMAIL_USER, EMAIL_PASS } = require("../constant");
+const {
+  EMAIL_USER,
+  EMAIL_PASS,
+  EMAIL_HOST,
+  EMAIL_PORT,
+  EMAIL_SUB,
+} = require("../constant");
 
 // Function to convert HEIC to JPEG
 async function convertHeicToJpeg(heicBuffer) {
@@ -13,11 +19,11 @@ async function convertHeicToJpeg(heicBuffer) {
   }
 }
 
-const verifyMail = async (email, name, vlink = "null") => {
+const verifyMail = async (options) => {
   try {
     let transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
+      host: EMAIL_HOST,
+      port: EMAIL_PORT,
       auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS,
@@ -43,21 +49,19 @@ const verifyMail = async (email, name, vlink = "null") => {
 
     let mailDetails = {
       from: EMAIL_USER,
-      to: email,
-      subject: "Your Thoughts email verification",
-      text: "That was easy!",
-      html: template
-        .replace("{{verification_link}}", vlink)
-        .replace("{{name}}", name),
+      to: options.email,
+      subject: options.subject,
+      text: options.message, // THIS IS THE MESSAGE WHICH WE WANT TO SEND TO THE CLIENT
+      // html: template
+      //   .replace("{{verification_link}}", vlink)
+      //   .replace("{{name}}", name),
     };
     let sendReceipt = await transporter.sendMail(mailDetails);
     return {
       status: 200,
-      message: `email has been sent for account verification `,
       data: sendReceipt,
     };
   } catch (error) {
-    console.log("verifyMail ~ error: >>", error);
     return { status: 400, message: "Error sending email!!! " };
   }
 };

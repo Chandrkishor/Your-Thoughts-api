@@ -9,6 +9,6 @@ router.get("/verify/:link", UserCreateAndLogin.verifyEmail);
 router.post("/register", UserCreateAndLogin.registerUser);
 router.post("/login", UserCreateAndLogin.userLogin);
 router.post("/forgot_password", UserCreateAndLogin.forgot);
-// router.post("/reset_password", UserCreateAndLogin.reset);
+router.patch("/reset_password/:token", UserCreateAndLogin.reset);
 
 module.exports = router;

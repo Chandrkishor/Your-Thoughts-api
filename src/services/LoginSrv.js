@@ -1,8 +1,14 @@
-const { API_BASEURL, API_BASENAME, API_BASEPATH } = require("../constant");
+const {
+  API_BASEURL,
+  API_BASENAME,
+  API_BASEPATH,
+  EMAIL_RESET_SUB,
+  EMAIL_VERIFY_SUB,
+} = require("../constant");
 const User = require("../modals/userModal");
 const { verifyMail } = require("../utils");
 
-const registerUser = async (body) => {
+const registerUser = async (body, baseUrl) => {
   const { name, email } = body;
   try {
     // Check if the email address already exists
@@ -17,16 +23,27 @@ const registerUser = async (body) => {
     // generating token for user
     const verificationToken = newUser.generateAuthToken();
     // Send verification email
-    await verifyMail(
-      email,
-      name,
-      `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${verificationToken}`,
-    );
-    return {
-      status: 201,
-      verificationToken,
-      message: `User created successfully! Check your email at: ${email}.`,
-    };
+    try {
+      const verificationUrl = `${baseUrl}/${verificationToken}`;
+      const message = `Please verify your email by clicking the link below:\n${verificationUrl}\nIf you have already done this, please ignore this email.\nThank you - Your Thoughts`;
+
+      await verifyMail({
+        email,
+        subject: EMAIL_VERIFY_SUB,
+        message,
+      });
+      return {
+        status: 201,
+        verificationToken,
+        message: `User created successfully! Check your email at: ${email}.`,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message:
+          "There was an error sending the email. Please try again later.",
+      };
+    }
   } catch (errors) {
     const error = new Error(errors?.message);
     error.status = 500;
@@ -34,7 +51,7 @@ const registerUser = async (body) => {
   }
 };
 
-const login = async (body) => {
+const login = async (body, baseUrl) => {
   try {
     let { email, password } = body;
     const user = await User.findOne({ email }).select("+password");
@@ -43,17 +60,30 @@ const login = async (body) => {
       return { status: 401, message: "Invalid email or password!!!" };
     }
 
-    const token = user.generateAuthToken();
+    const verificationToken = user.generateAuthToken();
     if (!user.isEmailVerified) {
-      await verifyMail(
-        email,
-        user?.name,
-        `${API_BASEURL}${API_BASENAME}${API_BASEPATH}verify/${token}`,
-      );
-      return {
-        status: 403,
-        message: `Check your email and verify: ${user.email}`,
-      };
+      try {
+        const verificationUrl = `${baseUrl}/${verificationToken}`;
+        const message = `Please verify your email by clicking the link below:\n${verificationUrl}\nIf you have already done this, please ignore this email.\nThank you - Your Thoughts`;
+
+        await verifyMail({
+          email,
+          subject: EMAIL_VERIFY_SUB,
+          message,
+        });
+        return {
+          status: 201,
+          verificationToken,
+          message: `User created successfully! Check your email at: ${email}.`,
+        };
+      } catch (error) {
+        console.log(`error--: >>`, error);
+        return {
+          status: 500,
+          message:
+            "There was an error sending the email. Please try again later.",
+        };
+      }
     }
     // const token = user.generateAuthToken();
     return {
@@ -67,7 +97,7 @@ const login = async (body) => {
   }
 };
 
-const forgotPassword = async (email) => {
+const forgotPassword = async (email, baseUrl) => {
   const user = await User.findOne({ email });
   if (!user) {
     return {
@@ -77,17 +107,30 @@ const forgotPassword = async (email) => {
   }
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false }); // validate before save false make stop all the validation errors, likes required fields and all
+  try {
+    // sent it to user email
+    const resetURL = `${baseUrl}reset_password/${resetToken}`;
+    const message = `Forgot your password? Submit a patch request to reset your password with a new password and confirm-password at: ${resetURL}.\nIf you did not forget your password, please ignore this email.`;
+    await verifyMail({
+      email,
+      subject: EMAIL_RESET_SUB,
+      message,
+    });
+    return {
+      status: 200,
+      message: `Reset token send to email !`,
+      resetToken,
+    };
+  } catch (errors) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
 
-  await verifyMail(
-    email,
-    "",
-    `${API_BASEURL}${API_BASENAME}${API_BASEPATH}reset_password/${resetToken}`,
-  );
-  return {
-    status: 200,
-    message: `Reset token send successfully`,
-    resetToken,
-  };
+    return {
+      status: 500,
+      message: "There was an error, sending the email. Please try again later",
+    };
+  }
 };
 
 const resetPassword = (req, res, next) => {};

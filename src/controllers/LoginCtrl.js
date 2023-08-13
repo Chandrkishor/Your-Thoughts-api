@@ -1,4 +1,4 @@
-const { UI_BASEURL } = require("../constant");
+const { UI_BASEURL, API_BASEPATH, API_BASENAME } = require("../constant");
 const CreateUser = require("../services/LoginSrv");
 const { emailToken } = require("./authController");
 
@@ -24,8 +24,11 @@ const registerUser = async (req, res) => {
       error.status = 400; // 400 Bad Request for missing input
       throw error;
     }
+    const baseUrl = `${req.protocol}://${req.get(
+      "host",
+    )}/${API_BASENAME}${API_BASEPATH}verify`;
     // Sending to service to register user
-    const createUser = await CreateUser.registerUser(user);
+    const createUser = await CreateUser.registerUser(user, baseUrl);
     res.status(createUser?.status).json({
       message: createUser?.message,
       token: createUser?.verificationToken,
@@ -43,8 +46,11 @@ const userLogin = async (req, res) => {
       error.status = 400; // 400 Bad Request for missing input
       throw error;
     }
+    const baseUrl = `${req.protocol}://${req.get(
+      "host",
+    )}/${API_BASENAME}${API_BASEPATH}verify`;
     const body = { email, password };
-    const userLogin = await CreateUser.login(body);
+    const userLogin = await CreateUser.login(body, baseUrl);
     // await res.cookie("access_Token", userLogin.token, {
     //   secure: false, // Set to true for production with HTTPS
     //   withCredentials: true,
@@ -81,7 +87,10 @@ const verifyEmail = async (req, res) => {
 const forgot = async (req, res) => {
   const email = req.body?.email;
   try {
-    const forgotPass = await CreateUser.forgotPassword(email);
+    const baseUrl = `${req.protocol}://${req.get(
+      "host",
+    )}/${API_BASENAME}${API_BASEPATH}`;
+    const forgotPass = await CreateUser.forgotPassword(email, baseUrl);
 
     res.status(forgotPass?.status).json({
       message: forgotPass?.message,
