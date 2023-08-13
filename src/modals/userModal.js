@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const { jwtSecret, jwtExpire } = require("../constant");
 const jwt = require("jsonwebtoken");
 
@@ -44,8 +45,13 @@ const userSchema = new mongoose.Schema({
       message: "Passwords are not same",
     },
   },
-  passwordChangedAt: {
-    type: Date,
+  passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+  role: {
+    type: String,
+    enum: ["user", "manager", "admin"],
+    default: "user",
   },
   dob: {
     // type: Date, // Consider using the Date type for storing date of birth
@@ -163,6 +169,17 @@ userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
   return false; // false means no change
 };
 
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex"); // this will give 32 characters long hex string
+  // this will encrypt the string
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // adding 10 min timeout
+  return resetToken; //returning encrypted token
+};
 //? Create the User model using the schema
 const User = mongoose.model("User", userSchema);
 

@@ -1,13 +1,21 @@
 const { UI_BASEURL } = require("../constant");
 const CreateUser = require("../services/LoginSrv");
+const { emailToken } = require("./authController");
 
 const registerUser = async (req, res) => {
-  const { email, name, password, confirmPassword } = req.body ?? {};
+  const {
+    email,
+    name,
+    password,
+    confirmPassword,
+    role = undefined,
+  } = req.body ?? {};
   const user = {
     name,
     email,
     password,
     confirmPassword,
+    role,
   };
 
   try {
@@ -59,7 +67,7 @@ const verifyEmail = async (req, res) => {
   if (!req?.params.link?.length) {
     res.status(400).json({ message: "Invalid token" });
   }
-  const tokenResponse = await CreateUser.emailToken(params);
+  const tokenResponse = await emailToken(params);
 
   if (tokenResponse?.status === 200) {
     res.redirect(`${UI_BASEURL}login`);
@@ -70,4 +78,26 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, userLogin, verifyEmail };
+const forgot = async (req, res) => {
+  const email = req.body?.email;
+  try {
+    const forgotPass = await CreateUser.forgotPassword(email);
+
+    res.status(forgotPass?.status).json({
+      message: forgotPass?.message,
+      resetToken: forgotPass.resetToken,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
+  }
+};
+
+const reset = (req, res, next) => {};
+
+module.exports = {
+  registerUser,
+  userLogin,
+  verifyEmail,
+  forgot,
+  reset,
+};

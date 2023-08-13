@@ -1,5 +1,6 @@
 const express = require("express");
 const UserCreateAndLogin = require("../../controllers/LoginCtrl");
+const { forgotPassword } = require("../../controllers/authController");
 
 const router = express.Router();
 
@@ -7,8 +8,7 @@ const router = express.Router();
 router.get("/verify/:link", UserCreateAndLogin.verifyEmail);
 router.post("/register", UserCreateAndLogin.registerUser);
 router.post("/login", UserCreateAndLogin.userLogin);
-// router.patch("/:userId", UserCreateAndLogin.updateOneUser);
-// router.patch("reset/:userId", UserCreateAndLogin.updateOneUserPassword);
-// router.delete("/:userId", UserCreateAndLogin.deleteOneUserDetail);
+router.post("/forgot_password", UserCreateAndLogin.forgot);
+// router.post("/reset_password", UserCreateAndLogin.reset);
 
 module.exports = router;
