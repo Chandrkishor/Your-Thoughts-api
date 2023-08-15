@@ -133,6 +133,41 @@ const forgotPassword = async (email, baseUrl) => {
   }
 };
 
-const resetPassword = (req, res, next) => {};
+const resetPassword = async (hashedToken, body) => {
+  try {
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return { status: 400, message: "Invalid or expired token!" };
+    }
+
+    user.password = body.password;
+    user.confirmPassword = body.confirmPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+    const token = user.generateAuthToken();
+    return {
+      status: 200,
+      token,
+      message: `Password updated successfully`,
+    };
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      let msg;
+      if (error.errors) {
+        for (const field in error.errors) {
+          //  console.error(`- ${field}: ${error.errors[field].message}`);
+          msg = `${error.errors[field].message}`;
+        }
+      }
+      return { status: 400, message: msg ?? error.message };
+    }
+    return { status: 500, message: "Internal server error" };
+  }
+};
 
 module.exports = { login, registerUser, forgotPassword, resetPassword };

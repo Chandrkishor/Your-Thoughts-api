@@ -1,6 +1,7 @@
 const { UI_BASEURL, API_BASEPATH, API_BASENAME } = require("../constant");
 const CreateUser = require("../services/LoginSrv");
 const { emailToken } = require("./authController");
+const crypto = require("crypto");
 
 const registerUser = async (req, res) => {
   const {
@@ -101,7 +102,23 @@ const forgot = async (req, res) => {
   }
 };
 
-const reset = (req, res, next) => {};
+const reset = async (req, res) => {
+  try {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+    const user = await CreateUser.resetPassword(hashedToken, req.body);
+    res.status(user?.status).json({
+      message: user?.message,
+      token: user.token ?? null,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || "Internal server error",
+    });
+  }
+};
 
 module.exports = {
   registerUser,
