@@ -144,6 +144,12 @@ userSchema.pre("save", async function (next) {
   this.confirmPassword = undefined; // delete the confirmPassword field
   next();
 });
+userSchema.pre("save", function (next) {
+  if (!this.isModified("password") || this.isNew) return next(); // this will run if password is modified or created
+
+  this.passwordChangedAt = Date.now() - 1000; // some time token generation faster so subtracting seconds
+  next();
+});
 
 //making instance and can be used any where
 userSchema.methods.isCorrectPassword = async function (
