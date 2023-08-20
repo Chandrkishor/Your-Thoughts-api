@@ -170,4 +170,32 @@ const resetPassword = async (hashedToken, body) => {
   }
 };
 
-module.exports = { login, registerUser, forgotPassword, resetPassword };
+const updatePass = async (body) => {
+  // 1)  get the user from the collection
+
+  const user = await findById(req.user.id).select("+password");
+  // 2) if posted current password is correct
+  if (!(await user.correctPassword(body.currentPassword, user.password))) {
+    return { status: 500, message: "current password is incorrect" };
+  }
+  // 3) if so update the password
+  user.password = body.password;
+  user.confirmPassword = body.confirmPassword;
+  await user.save();
+  // user.findByIdAndUpdate will not work as intended
+
+  // 4) log user in send JWT
+  const verificationToken = user.generateAuthToken();
+  return {
+    status: 200,
+    verificationToken,
+    message: `password Re-sets successfully`,
+  };
+};
+module.exports = {
+  login,
+  registerUser,
+  forgotPassword,
+  resetPassword,
+  updatePass,
+};
