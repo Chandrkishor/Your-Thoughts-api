@@ -119,11 +119,21 @@ const reset = async (req, res) => {
     });
   }
 };
+const updatePassword = async (req, res) => {
+  try {
+    await CreateUser.updatePass(req.body);
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || "Internal server error",
+    });
+  }
+};
 
 module.exports = {
+  updatePassword,
   registerUser,
-  userLogin,
   verifyEmail,
+  userLogin,
   forgot,
   reset,
 };
