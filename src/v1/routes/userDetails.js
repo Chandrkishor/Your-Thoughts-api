@@ -10,8 +10,8 @@ router.get(
   restrictTo("admin", "manager"),
   UserController.getAllUserDetails,
 );
-router.get("/:userId", verifyToken, UserController.getOneUserDetail);
-router.patch("/:userId", verifyToken, UserController.updateOneUserDetail);
-router.delete("/:userId", verifyToken, UserController.deleteOneUserDetail);
+router.get("/user", verifyToken, UserController.getOneUserDetail);
+router.patch("/user", verifyToken, UserController.updateOneUserDetail);
+router.delete("/user", verifyToken, UserController.deleteOneUserDetail);
 
 module.exports = router;
