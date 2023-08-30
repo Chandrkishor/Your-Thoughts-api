@@ -13,6 +13,8 @@ const {
   API_SECRET,
   CLOUD_NAME,
 } = require("./constant");
+const AppError = require("./utils/appError");
+const globalErrorHandler = require("./controllers/errorController");
 const cloudinary = require("cloudinary").v2;
 
 const app = express();
@@ -46,7 +48,10 @@ app.use((err, req, res, next) => {
   // Send the error message as part of the response
   res.status(err.status || 500).json({ error: err.message });
 });
-
+// app.use((req, res, next) => {
+//   console.log("req.headers", req.headers);
+//   next();
+// });
 // Use the body-parser middleware
 app.use(cookieParser());
 app.use(bodyParser.json());
@@ -55,6 +60,13 @@ app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 app.use("/api/v1", crateAndLogin);
 app.use("/api/v1/img", UploadImg);
 app.use("/api/v1/userDetails", v1UserRoute);
+
+//* routes error handling with custom error handlers
+app.all("*", (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
+});
+
+app.use(globalErrorHandler);
 
 app.listen(PORT, () => {
   console.log(`API is listening on port ${PORT}`);
