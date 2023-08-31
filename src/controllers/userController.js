@@ -1,35 +1,79 @@
-const userDetailsService = require("../services/userServices");
+const User = require("../modals/userModal");
+const catchAsync = require("../utils/catchAsync");
 
-const getAllUserDetails = async (req, res) => {
-  const allUsers = await userDetailsService.getAllUserDetails();
-  res.status(allUsers.status).json(allUsers.data);
-};
+const getAllUserDetails = catchAsync(async (req, res, next) => {
+  const users = await User.find();
+  return res.status(200).json({
+    status: "success",
+    data: users,
+  });
+});
 
-const getOneUserDetail = async (req, res) => {
-  const id = req.params?.userId;
-  const Requester = req?.user ?? null;
-  const user = await userDetailsService.getOneUserDetail(id, Requester?.userId);
-  res.status(user.status).json(user.data);
-};
+const getOneUserDetail = catchAsync(async (req, res, next) => {
+  const id = req.user.id;
+  const userDetails = await User.findById(id).select(
+    " -isEmailVerifiedToken -createdAt",
+  );
+  return res.status(200).json({
+    status: "success",
+    data: userDetails,
+  });
+});
 
-const updateOneUserDetail = async (req, res) => {
+// user can update their own data
+const updateMe = catchAsync(async (req, res, next) => {
   const { userId } = req.params;
   const { name, dob, gender } = req.body;
   if (!name && !dob && !gender) {
     return res.status(400).json({ message: "Required data missing" });
   }
-  const updateUser = await userDetailsService.updateOneUserDetail(
-    userId,
-    req.body,
-  );
-  res.status(updateUser.status).json(updateUser.data);
-};
-
-const deleteOneUserDetail = async (req, res) => {
+  const userVal = { name, dob, gender };
+  //? { new: true } option as the third parameter to findOneAndUpdate to ensure that the updated user details are returned.
+  const userDetails = await User.findOneAndUpdate({ _id: id }, userVal, {
+    new: true,
+  }).select("-isEmailVerifiedToken -createdAt");
+  return res.status(200).json({
+    status: "success",
+    message: "User updated successfully",
+    data: userDetails,
+  });
+});
+// administrator will update the user data
+const updateOneUserDetail = catchAsync(async (req, res, next) => {
   const { userId } = req.params;
-  const deleteUser = await userDetailsService.deleteOneUser(userId);
-  res.status(deleteUser.status).json(deleteUser.data);
-};
+  const { name, dob, gender } = req.body;
+  if (!name && !dob && !gender) {
+    return res.status(400).json({ message: "Required data missing" });
+  }
+  const userVal = { name, dob, gender };
+  //? { new: true } option as the third parameter to findOneAndUpdate to ensure that the updated user details are returned.
+  const userDetails = await User.findOneAndUpdate({ _id: id }, userVal, {
+    new: true,
+  }).select("-isEmailVerifiedToken -createdAt");
+  return res.status(200).json({
+    status: "success",
+    message: "User updated successfully",
+    data: userDetails,
+  });
+});
+
+const deleteOneUserDetail = catchAsync(async (req, res, next) => {
+  const { userId } = req.params;
+  const deletedUser = await User.findOneAndDelete({ _id: userId }).select(
+    "-isEmailVerifiedToken -updatedAt",
+  );
+  if (!deletedUser) {
+    return res.status(404).json({
+      status: "failed",
+      message: "User not found",
+    });
+  }
+  return res.status(200).json({
+    status: "success",
+    message: "User deleted successfully",
+    data: deletedUser,
+  });
+});
 
 module.exports = {
   getAllUserDetails,
