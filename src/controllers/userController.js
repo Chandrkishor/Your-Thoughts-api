@@ -9,8 +9,19 @@ const getAllUserDetails = catchAsync(async (req, res, next) => {
   });
 });
 
-const getOneUserDetail = catchAsync(async (req, res, next) => {
+const getMyDetail = catchAsync(async (req, res, next) => {
   const id = req.user.id;
+  const userDetails = await User.findById(id).select(
+    " -isEmailVerifiedToken -createdAt",
+  );
+  return res.status(200).json({
+    status: "success",
+    data: userDetails,
+  });
+});
+const getUserDetail = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+  console.log(`<< :--  id--: >>`, id);
   const userDetails = await User.findById(id).select(
     " -isEmailVerifiedToken -createdAt",
   );
@@ -77,7 +88,8 @@ const deleteOneUserDetail = catchAsync(async (req, res, next) => {
 
 module.exports = {
   getAllUserDetails,
-  getOneUserDetail,
+  getMyDetail,
+  getUserDetail,
   updateOneUserDetail,
   deleteOneUserDetail,
 };

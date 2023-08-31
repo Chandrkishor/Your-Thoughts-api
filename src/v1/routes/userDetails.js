@@ -10,7 +10,13 @@ router.get(
   restrictTo("admin", "manager"),
   UserController.getAllUserDetails,
 );
-router.get("/user", verifyToken, UserController.getOneUserDetail);
+router.get("/user", verifyToken, UserController.getMyDetail);
+router.get(
+  "/user/:id",
+  verifyToken,
+  restrictTo("admin", "manager"),
+  UserController.getUserDetail,
+);
 router.patch("/user", verifyToken, UserController.updateOneUserDetail);
 router.delete("/user", verifyToken, UserController.deleteOneUserDetail);
 

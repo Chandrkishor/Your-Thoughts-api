@@ -20,16 +20,15 @@ async function convertHeicToJpeg(heicBuffer) {
 }
 
 const verifyMail = async (options) => {
-  try {
-    let transporter = nodemailer.createTransport({
-      host: EMAIL_HOST,
-      port: EMAIL_PORT,
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS,
-      },
-    });
-    let template = `<html>
+  let transporter = nodemailer.createTransport({
+    host: EMAIL_HOST,
+    port: EMAIL_PORT,
+    auth: {
+      user: EMAIL_USER,
+      pass: EMAIL_PASS,
+    },
+  });
+  let template = `<html>
                         <head>
                         <meta charset="UTF-8">
                         <title>Email Verification</title>
@@ -47,23 +46,20 @@ const verifyMail = async (options) => {
                         </body>
                         </html>`;
 
-    let mailDetails = {
-      from: EMAIL_USER,
-      to: options.email,
-      subject: options.subject,
-      text: options.message, // THIS IS THE MESSAGE WHICH WE WANT TO SEND TO THE CLIENT
-      // html: template
-      //   .replace("{{verification_link}}", vlink)
-      //   .replace("{{name}}", name),
-    };
-    let sendReceipt = await transporter.sendMail(mailDetails);
-    return {
-      status: 200,
-      data: sendReceipt,
-    };
-  } catch (error) {
-    return { status: 400, message: "Error sending email!!! " };
-  }
+  let mailDetails = {
+    from: EMAIL_USER,
+    to: options.email,
+    subject: options.subject,
+    text: options.message, // THIS IS THE MESSAGE WHICH WE WANT TO SEND TO THE CLIENT
+    // html: template
+    //   .replace("{{verification_link}}", vlink)
+    //   .replace("{{name}}", name),
+  };
+  let sendReceipt = await transporter.sendMail(mailDetails);
+  return {
+    status: 200,
+    data: sendReceipt,
+  };
 };
 
 module.exports = {

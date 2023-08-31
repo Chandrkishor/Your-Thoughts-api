@@ -23,7 +23,7 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
-const registerUser = catchAsync(async (req, res) => {
+const registerUser = catchAsync(async (req, res, next) => {
   const {
     email,
     name,
@@ -51,33 +51,28 @@ const registerUser = catchAsync(async (req, res) => {
   // Check if the email address already exists
   const existingUser = await User.findOne({ email: email });
   if (existingUser) {
-    const error = new Error("The email address already exists.");
-    error.status = 409; // 409 Conflict seems more appropriate for duplicate resources
-    throw error;
+    next(new AppError(`The email address already exists`, 409));
   }
   // Create a new user
   let newUser = await User.create(user);
   // generating token for user
   const verificationToken = newUser.generateAuthToken();
   // Send verification email
-  try {
-    const verificationUrl = `${baseUrl}/${verificationToken}`;
-    const message = `Please verify your email by clicking the link below:\n${verificationUrl}\nIf you have already done this, please ignore this email.\nThank you - Your Thoughts`;
+  const verificationUrl = `${baseUrl}/${verificationToken}`;
+  const message = `Please verify your email by clicking the link below:\n${verificationUrl}\nIf you have already done this, please ignore this email.\nThank you - Your Thoughts`;
 
-    await verifyMail({
-      email,
-      subject: EMAIL_VERIFY_SUB,
-      message,
-    });
-    res.status(201).json({
-      message: `User created successfully! Check your email at: ${email}.`,
-      token: verificationToken,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "There was an error sending the email. Please try again later.",
-    });
-  }
+  await verifyMail({
+    email,
+    subject: EMAIL_VERIFY_SUB,
+    message,
+  }).catch((err) => {
+    // don't  want to throw an error just because user is already created
+    console.log(`<< :--  err--: >>`, err);
+  });
+  res.status(201).json({
+    message: `User created successfully! Check your email at: ${email}.`,
+    token: verificationToken,
+  });
 });
 
 const userLogin = catchAsync(async (req, res, next) => {
