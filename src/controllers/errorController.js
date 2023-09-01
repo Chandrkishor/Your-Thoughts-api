@@ -5,10 +5,14 @@ const handleCastError = (error) => {
   const message = `Invalid ${error.path}:${error.value}`;
   return AppError(message, 400);
 };
-const handleDuplicateFieldDB = (error, fieldName) => {
+const handleDuplicateFieldDB = (error) => {
   const value = error.errmsg.match(/(["'])(?:(?=(\\?))\2.)*?\1/);
-  console.log(`<< :--  value--: >>`, value);
-  const message = `Duplicate value for field '${fieldName}'. Please use another value.`;
+  const message = `Duplicate value for field '${value}'. Please use another value.`;
+  return new AppError(message, 400);
+};
+const handleValidationError = (error) => {
+  const errors = Object.values(error.errors).map((value) => value.message);
+  const message = `Invalid input data. ${errors.join(", ")}`;
   return new AppError(message, 400);
 };
 
@@ -23,6 +27,7 @@ const sendErrorDev = (err, res) => {
 const sendErrorProd = (err, res) => {
   // operational, trusted error: send msg to client
   if (err.isOperational) {
+    console.log(`err--isOperational: 🔥🕷️🕷️ >>`, err);
     res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
@@ -50,6 +55,7 @@ module.exports = (err, req, res, next) => {
     let error = { ...err };
     if (error.name === "CastError") error = handleCastError(error);
     if (error.code === "11000") error = handleDuplicateFieldDB(error);
+    if (error.name === "ValidationError") error = handleValidationError(error);
 
     sendErrorProd(error, res);
   }
