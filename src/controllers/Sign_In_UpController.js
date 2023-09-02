@@ -8,7 +8,7 @@ const {
 } = require("../constant");
 const jwt = require("jsonwebtoken");
 const User = require("../modals/userModal");
-const { verifyMail } = require("../utils");
+const { verifyMail, filterObjKey, isValidObjKeyVal } = require("../utils");
 const { emailToken } = require("./authController");
 const crypto = require("crypto");
 const AppError = require("../utils/appError");
@@ -23,24 +23,22 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
-const registerUser = catchAsync(async (req, res, next) => {
-  const {
-    email,
-    name,
-    password,
-    confirmPassword,
-    role = undefined,
-  } = req.body ?? {};
-  const user = {
-    name,
-    email,
-    password,
-    confirmPassword,
-    role,
-  };
+const singUp = catchAsync(async (req, res, next) => {
+  let userData = filterObjKey(
+    req.body,
+    "name",
+    "email",
+    "password",
+    "confirmPassword",
+  );
 
-  if (!name || !email || !password || !confirmPassword) {
-    const error = new Error("Please fill all the required fields");
+  if (
+    !isValidObjKeyVal(userData, "name", "email", "password", "confirmPassword")
+      .valid
+  ) {
+    // next(AppError("Please fill all the required fields", 400));
+    console.log(`<< :--  isValid--: >>`, isValid);
+    const error = new Error(`Please fill all the required fields`);
     error.status = 400; // 400 Bad Request for missing input
     throw error;
   }
@@ -49,12 +47,12 @@ const registerUser = catchAsync(async (req, res, next) => {
   )}/${API_BASENAME}${API_BASEPATH}verify`;
 
   // Check if the email address already exists
-  const existingUser = await User.findOne({ email: email });
+  const existingUser = await User.findOne({ email: userData.email });
   if (existingUser) {
     next(new AppError(`The email address already exists`, 409));
   }
   // Create a new user
-  let newUser = await User.create(user);
+  // let newUser = await User.create(userData);
   // generating token for user
   const verificationToken = newUser.generateAuthToken();
   // Send verification email
@@ -79,9 +77,10 @@ const userLogin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    const error = new Error("Please provide a valid email and password");
-    error.status = 400; // 400 Bad Request for missing input
-    throw error;
+    // const error = new Error("Please provide a valid email and password");
+    // error.status = 400; // 400 Bad Request for missing input
+    // throw error;
+    next(AppError("Please provide a valid email and password", 400));
   }
   const baseUrl = `${req.protocol}://${req.get(
     "host",
@@ -248,7 +247,7 @@ const updatePassword = catchAsync(async (req, res, next) => {
 
 module.exports = {
   updatePassword,
-  registerUser,
+  singUp,
   verifyEmail,
   userLogin,
   forgot,

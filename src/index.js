@@ -1,6 +1,5 @@
 const express = require("express");
-const v1UserRoute = require("./v1/routes/userDetails");
-const crateAndLogin = require("./v1/routes/userCreateLogin");
+const userRoute = require("./routes/userRouter");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const bodyParser = require("body-parser");
@@ -19,6 +18,13 @@ const cloudinary = require("cloudinary").v2;
 
 const app = express();
 
+//An uncaught exception occurs when an error is thrown but not caught by any surrounding try-catch block or error handling mechanism,allows you to define custom behavior for handling such exceptions.
+process.on("uncaughtException", (err) => {
+  console.error(err.name, err.message);
+  console.log("Uncaught Exception!!! 🧨 Shutting down...");
+  process.exit(1); // to shut down
+});
+
 cloudinary.config({
   cloud_name: CLOUD_NAME,
   api_key: API_KEY,
@@ -30,10 +36,10 @@ mongoose
   .connect(mongodbUrl, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log("Connected to MongoDB");
-  })
-  .catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
   });
+// .catch((error) => { // we can use this way as well but we are handling globally
+//   console.error("Error connecting to MongoDB:", error);
+// });
 const UploadImg = async (req, res) => {
   const imageFile = req?.body;
   console.log("UploadImg ~-------- imageFile: >>", imageFile);
@@ -57,9 +63,8 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
-app.use("/api/v1", crateAndLogin);
+app.use("/api/v1", userRoute);
 app.use("/api/v1/img", UploadImg);
-app.use("/api/v1/userDetails", v1UserRoute);
 
 //* routes error handling with custom error handlers
 app.all("*", (req, res, next) => {
@@ -68,6 +73,16 @@ app.all("*", (req, res, next) => {
 
 app.use(globalErrorHandler);
 
-app.listen(PORT, () => {
+// storing server in a variable to shutdown on unexpected error
+const server = app.listen(PORT, () => {
   console.log(`API is listening on port ${PORT}`);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error(err.name, err.message);
+  console.log("Unhandled rejection! 🧨 Shutting down...");
+  server.close(() => {
+    // saving server in a variable and then closing it and then shuting it down
+    process.exit(1); // to shut down
+  });
 });

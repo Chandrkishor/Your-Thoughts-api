@@ -5,7 +5,6 @@ const {
   EMAIL_PASS,
   EMAIL_HOST,
   EMAIL_PORT,
-  EMAIL_SUB,
 } = require("../constant");
 
 // Function to convert HEIC to JPEG
@@ -62,7 +61,43 @@ const verifyMail = async (options) => {
   };
 };
 
+function isValidObjKeyVal(obj, ...keys) {
+  let result = {
+    exists: true,
+    valid: true,
+    message: "",
+  };
+
+  for (const key of keys) {
+    if (!(key in obj)) {
+      result.exists = false;
+      result.valid = false;
+      result.message = `${key} is missing in the object.`;
+      break;
+    }
+
+    const value = obj[key];
+    if (value === null || value === undefined || value === "") {
+      result.valid = false;
+      result.message = `${key} is not valid.`;
+      break;
+    }
+  }
+
+  return result;
+}
+
+const filterObjKey = (obj, ...allowedFields) => {
+  const newObj = {};
+  Object.keys(obj).forEach((el) => {
+    if (allowedFields.includes(el)) newObj[el] = obj[el];
+  });
+  return newObj;
+};
+
 module.exports = {
   convertHeicToJpeg,
   verifyMail,
+  isValidObjKeyVal,
+  filterObjKey,
 };
