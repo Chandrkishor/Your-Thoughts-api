@@ -1,47 +1,39 @@
 const jwt = require("jsonwebtoken");
 const User = require("../modals/userModal");
 const { jwtSecret } = require("../constant");
+const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/appError");
 
-const verifyToken = async (req, res, next) => {
+const protect = catchAsync(async (req, res, next) => {
   let token;
-  try {
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-    }
-    // * second way to authenticate
-    // const token = req.cookies.access_Token;
-    if (!token) {
-      return res
-        .status(401)
-        .json({ message: "You are not logged in! Please log-in" });
-    }
 
-    const decodedToken = jwt.verify(token, jwtSecret);
-    // this one to check if the user is not altered by someone\
-    const CurrentUser = await User.findById(decodedToken?._id);
-    if (!CurrentUser) {
-      return res
-        .status(401)
-        .json({ message: "The user belongings to this token does not exist" });
-    }
-    // this to check if the token is before password change or after
-    if (CurrentUser.changePasswordAfter(decodedToken.iat)) {
-      return res
-        .status(401)
-        .json({ message: "Password changed, Please login again" });
-    }
-    req.user = CurrentUser;
-    next();
-  } catch (error) {
-    console.log(`error--: >>`, error);
-    return res
-      .status(error.status || 500)
-      .json({ message: error.message ?? "something went wrong" });
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
   }
-};
+  // * second way to authenticate
+  // const token = req.cookies.access_Token;
+  if (!token) {
+    return next(new AppError("You are not logged in! Please log-in", 401));
+  }
+
+  const decodedToken = jwt.verify(token, jwtSecret);
+  // this one to check if the user is not altered by someone\
+  const CurrentUser = await User.findById(decodedToken?._id);
+  if (!CurrentUser) {
+    return next(
+      new AppError("The user belongings to this token does not exist", 401),
+    );
+  }
+  // this to check if the token is before password change or after
+  if (CurrentUser.changePasswordAfter(decodedToken.iat)) {
+    return next(new AppError("Password changed, Please login again", 401));
+  }
+  req.user = CurrentUser;
+  next();
+});
 
 const emailToken = async (body) => {
   try {
@@ -76,6 +68,6 @@ const restrictTo = (...roles) => {
 
 module.exports = {
   emailToken,
-  verifyToken,
+  protect,
   restrictTo,
 };

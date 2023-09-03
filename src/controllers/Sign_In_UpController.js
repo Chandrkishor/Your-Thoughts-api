@@ -19,7 +19,7 @@ const createSendToken = (user, statusCode, res) => {
   res.status(statusCode).json({
     message: "internal server error",
     token,
-    data: { user },
+    data: user,
   });
 };
 
@@ -34,13 +34,9 @@ const singUp = catchAsync(async (req, res, next) => {
 
   if (
     !isValidObjKeyVal(userData, "name", "email", "password", "confirmPassword")
-      .valid
+      ?.valid
   ) {
-    // next(AppError("Please fill all the required fields", 400));
-    console.log(`<< :--  isValid--: >>`, isValid);
-    const error = new Error(`Please fill all the required fields`);
-    error.status = 400; // 400 Bad Request for missing input
-    throw error;
+    next(new AppError(`Please fill all the required fields`, 400));
   }
   const baseUrl = `${req.protocol}://${req.get(
     "host",
@@ -52,10 +48,11 @@ const singUp = catchAsync(async (req, res, next) => {
     next(new AppError(`The email address already exists`, 409));
   }
   // Create a new user
-  // let newUser = await User.create(userData);
+  let newUser = await User.create(userData);
   // generating token for user
   const verificationToken = newUser.generateAuthToken();
   // Send verification email
+  const { email } = userData;
   const verificationUrl = `${baseUrl}/${verificationToken}`;
   const message = `Please verify your email by clicking the link below:\n${verificationUrl}\nIf you have already done this, please ignore this email.\nThank you - Your Thoughts`;
 
@@ -77,10 +74,7 @@ const userLogin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    // const error = new Error("Please provide a valid email and password");
-    // error.status = 400; // 400 Bad Request for missing input
-    // throw error;
-    next(AppError("Please provide a valid email and password", 400));
+    return next(new AppError("Please provide a valid email and password", 400));
   }
   const baseUrl = `${req.protocol}://${req.get(
     "host",
@@ -89,9 +83,7 @@ const userLogin = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email }).select("+password");
 
   if (!user || !(await user.isCorrectPassword(password, user.password))) {
-    return res.status(401).json({
-      message: `Invalid email or password!!!`,
-    });
+    return next(new AppError("Invalid email or password!!!", 401));
   }
   const verificationToken = user.generateAuthToken();
   if (!user.isEmailVerified) {
@@ -120,14 +112,6 @@ const userLogin = catchAsync(async (req, res, next) => {
     message: "Login successfully",
     token: verificationToken,
   });
-
-  // await res.cookie("access_Token", userLogin.token, {
-  //   secure: false, // Set to true for production with HTTPS
-  //   withCredentials: true,
-  //   httpOnly: false,
-  //   sameSite: "Lax",
-  //   maxAge: jwtExpire,
-  // });
 });
 
 const verifyEmail = catchAsync(async (req, res) => {

@@ -37,23 +37,19 @@ mongoose
   .then(() => {
     console.log("Connected to MongoDB");
   });
-// .catch((error) => { // we can use this way as well but we are handling globally
-//   console.error("Error connecting to MongoDB:", error);
-// });
+
 const UploadImg = async (req, res) => {
   const imageFile = req?.body;
-  console.log("UploadImg ~-------- imageFile: >>", imageFile);
-  console.log("UploadImg ~-------- imageFile: >>", req);
   res.send(200);
   // const uploadResult = await cloudinary.uploader.upload(imageFile);
   // const imageURL = uploadResult.secure_url;
 };
 
-app.use((err, req, res, next) => {
-  console.error(err); //for debugging purposes
-  // Send the error message as part of the response
-  res.status(err.status || 500).json({ error: err.message });
-});
+// app.use((err, req, res, next) => {
+//   console.log(`🔥🔥err🌵 >`, err);
+//   // Send the error message as part of the response
+//   res.status(err.status || 500).json({ error: err.message });
+// });
 // app.use((req, res, next) => {
 //   console.log("req.headers", req.headers);
 //   next();

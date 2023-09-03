@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
         // here this is pointing the current document on new document creation
         return value === this.password; // true, means no error
       },
-      message: "Passwords are not same",
+      message: "Passwords are not the same",
     },
   },
   passwordChangedAt: Date,

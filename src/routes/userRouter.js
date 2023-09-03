@@ -1,7 +1,7 @@
 const express = require("express");
 const UserController = require("../controllers/userController");
 const UserCreateAndLogin = require("../controllers/Sign_In_UpController");
-const { restrictTo, verifyToken } = require("../controllers/authController");
+const { restrictTo, protect } = require("../controllers/authController");
 
 const router = express.Router();
 
@@ -11,23 +11,23 @@ router
   .post("/login", UserCreateAndLogin.userLogin)
   .post("/forgot_password", UserCreateAndLogin.forgot)
   .patch("/reset_password/:token", UserCreateAndLogin.reset)
-  .patch("/update_my_password", verifyToken, UserCreateAndLogin.updatePassword);
+  .patch("/update_my_password", protect, UserCreateAndLogin.updatePassword);
 
 router
   .get(
     "/users",
-    verifyToken,
+    protect,
     restrictTo("admin", "manager"),
     UserController.getAllUserDetails,
   )
-  .get("/user", verifyToken, UserController.getMyDetail)
+  .get("/user", protect, UserController.getMyDetail)
   .get(
     "/user/:id",
-    verifyToken,
+    protect,
     restrictTo("admin", "manager"),
     UserController.getUserDetail,
   )
-  .patch("/user", verifyToken, UserController.updateOneUserDetail)
-  .delete("/user", verifyToken, UserController.deleteOneUserDetail);
+  .patch("/user", protect, UserController.updateOneUserDetail)
+  .delete("/user", protect, UserController.deleteOneUserDetail);
 
 module.exports = router;
