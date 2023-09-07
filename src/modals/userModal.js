@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
         // here this is pointing the current document on new document creation
         return value === this.password; // true, means no error
       },
-      message: "Passwords are not same",
+      message: "Passwords are not the same",
     },
   },
   passwordChangedAt: Date,
@@ -102,25 +102,8 @@ const userSchema = new mongoose.Schema({
       message: "Contact number should be a 10-digit number.",
     },
   },
-  image: {
+  photo: {
     type: String,
-    validate: {
-      validator: function (value) {
-        // Base64 image validation regex
-        return /^data:image\/(png|jpeg|jpg);base64,/.test(value);
-      },
-      message: "Invalid image format. Only PNG and JPEG images are allowed.",
-    },
-  },
-  imageSize: {
-    type: Number,
-    validate: {
-      validator: function (value) {
-        // Image size validation (maximum 5MB)
-        return value <= 5 * 1024 * 1024;
-      },
-      message: "Image size should be less than or equal to 5MB.",
-    },
   },
   createdAt: {
     type: Date,

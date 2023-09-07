@@ -8,7 +8,7 @@ const {
 } = require("../constant");
 const jwt = require("jsonwebtoken");
 const User = require("../modals/userModal");
-const { verifyMail } = require("../utils");
+const { verifyMail, filterObjKey, isValidObjKeyVal } = require("../utils");
 const { emailToken } = require("./authController");
 const crypto = require("crypto");
 const AppError = require("../utils/appError");
@@ -19,74 +19,62 @@ const createSendToken = (user, statusCode, res) => {
   res.status(statusCode).json({
     message: "internal server error",
     token,
-    data: { user },
+    data: user,
   });
 };
 
-const registerUser = catchAsync(async (req, res) => {
-  const {
-    email,
-    name,
-    password,
-    confirmPassword,
-    role = undefined,
-  } = req.body ?? {};
-  const user = {
-    name,
-    email,
-    password,
-    confirmPassword,
-    role,
-  };
+const singUp = catchAsync(async (req, res, next) => {
+  let userData = filterObjKey(
+    req.body,
+    "name",
+    "email",
+    "password",
+    "confirmPassword",
+  );
 
-  if (!name || !email || !password || !confirmPassword) {
-    const error = new Error("Please fill all the required fields");
-    error.status = 400; // 400 Bad Request for missing input
-    throw error;
+  if (
+    !isValidObjKeyVal(userData, "name", "email", "password", "confirmPassword")
+      ?.valid
+  ) {
+    next(new AppError(`Please fill all the required fields`, 400));
   }
   const baseUrl = `${req.protocol}://${req.get(
     "host",
   )}/${API_BASENAME}${API_BASEPATH}verify`;
 
   // Check if the email address already exists
-  const existingUser = await User.findOne({ email: email });
+  const existingUser = await User.findOne({ email: userData.email });
   if (existingUser) {
-    const error = new Error("The email address already exists.");
-    error.status = 409; // 409 Conflict seems more appropriate for duplicate resources
-    throw error;
+    next(new AppError(`The email address already exists`, 409));
   }
   // Create a new user
-  let newUser = await User.create(user);
+  let newUser = await User.create(userData);
   // generating token for user
   const verificationToken = newUser.generateAuthToken();
   // Send verification email
-  try {
-    const verificationUrl = `${baseUrl}/${verificationToken}`;
-    const message = `Please verify your email by clicking the link below:\n${verificationUrl}\nIf you have already done this, please ignore this email.\nThank you - Your Thoughts`;
+  const { email } = userData;
+  const verificationUrl = `${baseUrl}/${verificationToken}`;
+  const message = `Please verify your email by clicking the link below:\n${verificationUrl}\nIf you have already done this, please ignore this email.\nThank you - Your Thoughts`;
 
-    await verifyMail({
-      email,
-      subject: EMAIL_VERIFY_SUB,
-      message,
-    });
-    res.status(201).json({
-      message: `User created successfully! Check your email at: ${email}.`,
-      token: verificationToken,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "There was an error sending the email. Please try again later.",
-    });
-  }
+  await verifyMail({
+    email,
+    subject: EMAIL_VERIFY_SUB,
+    message,
+  }).catch((err) => {
+    // don't  want to throw an error just because user is already created
+    console.log(`<< :--  err--: >>`, err);
+  });
+  res.status(201).json({
+    message: `User created successfully! Check your email at: ${email}.`,
+    token: verificationToken,
+  });
 });
 
 const userLogin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    const error = new Error("Please provide a valid email and password");
-    error.status = 400; // 400 Bad Request for missing input
-    throw error;
+    return next(new AppError("Please provide a valid email and password", 400));
   }
   const baseUrl = `${req.protocol}://${req.get(
     "host",
@@ -95,9 +83,7 @@ const userLogin = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email }).select("+password");
 
   if (!user || !(await user.isCorrectPassword(password, user.password))) {
-    return res.status(401).json({
-      message: `Invalid email or password!!!`,
-    });
+    return next(new AppError("Invalid email or password!!!", 401));
   }
   const verificationToken = user.generateAuthToken();
   if (!user.isEmailVerified) {
@@ -126,14 +112,6 @@ const userLogin = catchAsync(async (req, res, next) => {
     message: "Login successfully",
     token: verificationToken,
   });
-
-  // await res.cookie("access_Token", userLogin.token, {
-  //   secure: false, // Set to true for production with HTTPS
-  //   withCredentials: true,
-  //   httpOnly: false,
-  //   sameSite: "Lax",
-  //   maxAge: jwtExpire,
-  // });
 });
 
 const verifyEmail = catchAsync(async (req, res) => {
@@ -253,7 +231,7 @@ const updatePassword = catchAsync(async (req, res, next) => {
 
 module.exports = {
   updatePassword,
-  registerUser,
+  singUp,
   verifyEmail,
   userLogin,
   forgot,

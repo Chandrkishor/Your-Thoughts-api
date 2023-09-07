@@ -5,7 +5,6 @@ const {
   EMAIL_PASS,
   EMAIL_HOST,
   EMAIL_PORT,
-  EMAIL_SUB,
 } = require("../constant");
 
 // Function to convert HEIC to JPEG
@@ -20,16 +19,15 @@ async function convertHeicToJpeg(heicBuffer) {
 }
 
 const verifyMail = async (options) => {
-  try {
-    let transporter = nodemailer.createTransport({
-      host: EMAIL_HOST,
-      port: EMAIL_PORT,
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS,
-      },
-    });
-    let template = `<html>
+  let transporter = nodemailer.createTransport({
+    host: EMAIL_HOST,
+    port: EMAIL_PORT,
+    auth: {
+      user: EMAIL_USER,
+      pass: EMAIL_PASS,
+    },
+  });
+  let template = `<html>
                         <head>
                         <meta charset="UTF-8">
                         <title>Email Verification</title>
@@ -47,26 +45,59 @@ const verifyMail = async (options) => {
                         </body>
                         </html>`;
 
-    let mailDetails = {
-      from: EMAIL_USER,
-      to: options.email,
-      subject: options.subject,
-      text: options.message, // THIS IS THE MESSAGE WHICH WE WANT TO SEND TO THE CLIENT
-      // html: template
-      //   .replace("{{verification_link}}", vlink)
-      //   .replace("{{name}}", name),
-    };
-    let sendReceipt = await transporter.sendMail(mailDetails);
-    return {
-      status: 200,
-      data: sendReceipt,
-    };
-  } catch (error) {
-    return { status: 400, message: "Error sending email!!! " };
+  let mailDetails = {
+    from: EMAIL_USER,
+    to: options.email,
+    subject: options.subject,
+    text: options.message, // THIS IS THE MESSAGE WHICH WE WANT TO SEND TO THE CLIENT
+    // html: template
+    //   .replace("{{verification_link}}", vlink)
+    //   .replace("{{name}}", name),
+  };
+  let sendReceipt = await transporter.sendMail(mailDetails);
+  return {
+    status: 200,
+    data: sendReceipt,
+  };
+};
+
+function isValidObjKeyVal(obj, ...keys) {
+  let result = {
+    exists: true,
+    valid: true,
+    message: "",
+  };
+
+  for (const key of keys) {
+    if (!(key in obj)) {
+      result.exists = false;
+      result.valid = false;
+      result.message = `${key} is missing in the object.`;
+      break;
+    }
+
+    const value = obj[key];
+    if (value === null || value === undefined || value === "") {
+      result.valid = false;
+      result.message = `${key} is not valid.`;
+      break;
+    }
   }
+
+  return result;
+}
+
+const filterObjKey = (obj, ...allowedFields) => {
+  const newObj = {};
+  Object.keys(obj).forEach((el) => {
+    if (allowedFields.includes(el)) newObj[el] = obj[el];
+  });
+  return newObj;
 };
 
 module.exports = {
   convertHeicToJpeg,
   verifyMail,
+  isValidObjKeyVal,
+  filterObjKey,
 };
