@@ -1,4 +1,5 @@
 const User = require("../modals/userModal");
+const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
 const getAllUserDetails = catchAsync(async (req, res, next) => {
@@ -69,15 +70,13 @@ const updateOneUserDetail = catchAsync(async (req, res, next) => {
 });
 
 const deleteOneUserDetail = catchAsync(async (req, res, next) => {
-  const { userId } = req.params;
-  const deletedUser = await User.findOneAndDelete({ _id: userId }).select(
-    "-isEmailVerifiedToken -updatedAt",
-  );
+  const { id } = req.params;
+  // console.log(`<< :--  id--: >>`, id);
+  // return;
+  const deletedUser = await User.findOneAndDelete({ _id: id });
+
   if (!deletedUser) {
-    return res.status(404).json({
-      status: "failed",
-      message: "User not found",
-    });
+    next(new AppError("User not found", 404));
   }
   return res.status(200).json({
     status: "success",

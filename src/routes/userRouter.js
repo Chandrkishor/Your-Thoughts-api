@@ -15,12 +15,12 @@ router
 
 router
   .get(
-    "/users",
+    "/users", // all users
     protect,
     restrictTo("admin", "manager"),
     UserController.getAllUserDetails,
   )
-  .get("/user", protect, UserController.getMyDetail)
+  .get("/user", protect, UserController.getMyDetail) // my details
   .get(
     "/user/:id",
     protect,
@@ -28,6 +28,11 @@ router
     UserController.getUserDetail,
   )
   .patch("/user", protect, UserController.updateOneUserDetail)
-  .delete("/user", protect, UserController.deleteOneUserDetail);
+  .delete(
+    "/user/:id",
+    protect,
+    restrictTo("admin", "user"),
+    UserController.deleteOneUserDetail,
+  );
 
 module.exports = router;

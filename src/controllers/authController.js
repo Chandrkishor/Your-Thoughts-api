@@ -56,11 +56,11 @@ const emailToken = async (body) => {
 
 const restrictTo = (...roles) => {
   return (req, res, next) => {
-    // roles is an array ["admin", "manager", ]
+    // roles is an array just because spread operator will make it array ["admin", "manager", ]
     if (!roles.includes(req.user.role)) {
-      return res
-        .status(403)
-        .json({ message: "You do not have permission to access this." });
+      return next(
+        new AppError("You do not have permission to access this action.", 403),
+      );
     }
     next();
   };
