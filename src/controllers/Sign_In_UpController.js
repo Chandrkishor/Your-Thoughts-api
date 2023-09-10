@@ -14,13 +14,18 @@ const crypto = require("crypto");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
-const createSendToken = (user, statusCode, res) => {
-  const token = jwt.sign({ id }, jwtSecret);
-  res.status(statusCode).json({
-    message: "internal server error",
-    token,
-    data: user,
-  });
+const createSendToken = (res, statusCode, withToken = false, user) => {
+  const response = {
+    status: "success",
+    data: user ?? {},
+  };
+
+  if (withToken) {
+    const token = jwt.sign({ id: user.id }, jwtSecret);
+    response.token = token;
+  }
+
+  return res.status(statusCode).json(response);
 };
 
 const singUp = catchAsync(async (req, res, next) => {
@@ -107,34 +112,27 @@ const userLogin = catchAsync(async (req, res, next) => {
         ),
       );
   }
-
   return res.status(200).json({
     message: "Login successfully",
     token: verificationToken,
+    data: { _id: user._id, email: user.email, name: user.name },
   });
 });
 
-const verifyEmail = catchAsync(async (req, res) => {
+const verifyEmail = catchAsync(async (req, res, next) => {
   let params = req?.params?.link;
   if (!req?.params.link?.length) {
-    res.status(400).json({ message: "Invalid token" });
+    return next(new AppError("Invalid token", 400));
   }
-  const tokenResponse = await emailToken(params);
-
-  if (tokenResponse?.status === 200) {
-    // res.status(200).redirect(`${UI_BASEURL}login`);
-    res.status(200).json({
-      website: `${UI_BASEURL}login`,
-      msg: "Email Verified Successfully",
-    });
-  } else {
-    res
-      .status(tokenResponse?.status ?? 200)
-      .json({ message: tokenResponse?.message ?? "" });
-  }
+  emailToken(params, res, next);
+  // res.status(200).redirect(`${UI_BASEURL}login`);
+  // res.status(200).json({
+  //   website: `${UI_BASEURL}login`,
+  //   msg: "Email Verified Successfully",
+  // });
 });
 
-const forgot = catchAsync(async (req, res) => {
+const forgot = catchAsync(async (req, res, next) => {
   const email = req.body?.email;
   const baseUrl = `${req.protocol}://${req.get(
     "host",
@@ -142,14 +140,12 @@ const forgot = catchAsync(async (req, res) => {
 
   const user = await User.findOne({ email });
   if (!user) {
-    res.status(404).json({
-      message: "There is no user with this email address.",
-    });
+    return next(new AppError(`There is no user with this email address.`, 404));
   }
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false }); // validate before save false make stop all the validation errors, likes required fields and all
 
-  // sent it to user email
+  // sent it to user a email with reset token and save into database after hashing, if email failed the remove token for db and return filed msg to user
   const resetURL = `${baseUrl}reset_password/${resetToken}`;
   const message = `Forgot your password? Submit a patch request to reset your password with a new password and confirm-password at: ${resetURL}.\nIf you did not forget your password, please ignore this email.`;
   verifyMail({
@@ -167,7 +163,7 @@ const forgot = catchAsync(async (req, res) => {
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
       await user.save({ validateBeforeSave: false });
-      next(
+      return next(
         new AppError(
           `There was an error, sending the email. Please try again later`,
           500,
@@ -176,7 +172,7 @@ const forgot = catchAsync(async (req, res) => {
     });
 });
 
-const reset = catchAsync(async (req, res) => {
+const reset = catchAsync(async (req, res, next) => {
   const { password, confirmPassword } = req.body;
   const hashedToken = crypto
     .createHash("sha256")
@@ -189,9 +185,7 @@ const reset = catchAsync(async (req, res) => {
   });
 
   if (!user) {
-    return res.status(400).json({
-      message: "Invalid or expired token!",
-    });
+    return next(new AppError(`Invalid or expired token!`, 400));
   }
 
   user.password = password;
@@ -208,24 +202,23 @@ const reset = catchAsync(async (req, res) => {
 
 const updatePassword = catchAsync(async (req, res, next) => {
   // 1)  get the user from the collection
-  const user = await User.findById(req.user.id).select("+password");
+  const { id: userId } = req.user;
+  const user = await User.findById(userId).select("+password");
   // 2) if posted current password is correct
   if (
     !(await user.isCorrectPassword(req.body.currentPassword, user.password))
   ) {
-    return res.status(401).json({
-      message: "current password is incorrect",
-    });
+    return next(new AppError(`current password is incorrect`, 401));
   }
   // 3) if so update the password
   user.password = req.body.password;
   user.confirmPassword = req.body.confirmPassword;
   await user.save(); // user.findByIdAndUpdate will not work as intended
   // 4) log user in send JWT
-  const verificationToken = user.generateAuthToken();
+  const token = user.generateAuthToken();
   return res.status(200).json({
-    verificationToken,
     message: "password Re-sets successfully",
+    token,
   });
 });
 

@@ -48,6 +48,11 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
   role: {
     type: String,
     enum: ["user", "manager", "admin"],
@@ -131,6 +136,12 @@ userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next(); // this will run if password is modified or created
 
   this.passwordChangedAt = Date.now() - 1000; // some time token generation faster so subtracting seconds
+  next();
+});
+
+userSchema.pre(/^find/, function (next) {
+  // Modify the current query to only return active users
+  this.find({ active: { $ne: false } });
   next();
 });
 
