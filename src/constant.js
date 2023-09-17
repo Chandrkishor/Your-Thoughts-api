@@ -16,6 +16,7 @@ module.exports = {
 
   jwtSecret: process.env.JWT_SECRET,
   jwtExpire: process.env.JWT_EXPIRE,
+  cookieExpire: process.env.COOKIE_EXPIRE,
 
   EMAIL_USER: process.env.EMAIL_USER,
   EMAIL_PASS: process.env.EMAIL_PASS,

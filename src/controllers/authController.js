@@ -22,6 +22,7 @@ const protect = catchAsync(async (req, res, next) => {
   const decodedToken = jwt.verify(token, jwtSecret);
   // this one to check if the user is not altered by someone\
   const CurrentUser = await User.findById(decodedToken?._id);
+
   if (!CurrentUser) {
     return next(
       new AppError("The user belongings to this token does not exist", 401),
