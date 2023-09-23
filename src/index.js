@@ -2,6 +2,7 @@ const express = require("express");
 const userRoute = require("./routes/userRouter");
 const mongoose = require("mongoose");
 const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
 require("dotenv").config();
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -20,8 +21,12 @@ const cloudinary = require("cloudinary").v2;
 const app = express();
 
 // global middleware
+// set security HTTP headers
+app.use(helmet()); // at the beginning
+
+//Limit rate request per IP
 const limiter = rateLimit({
-  max: 3, // maximum rate limit
+  max: 100, // maximum rate limit
   windowMs: 60 * 60 * 1000, //1hr
   message: "To many requests form this IP address, Please try again in an hour",
 });
@@ -66,8 +71,9 @@ const UploadImg = async (req, res) => {
 
 // Use the body-parser middleware
 
-app.use(cookieParser());
-app.use(bodyParser.json());
+app.use(cookieParser()); // cookie parser
+// app.use(bodyParser.json()); // body parser
+app.use(bodyParser.json({ limit: "10kb" })); // if body parser data is more than 10 kb then it will not accept
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 app.use("/api/v1", userRoute);
