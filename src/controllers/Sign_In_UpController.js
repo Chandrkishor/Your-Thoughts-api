@@ -14,6 +14,7 @@ const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
 const createSendToken = async (res, statusCode, user, isSendUser = true) => {
+  const filteredObj = filterObjKey({ ...user._doc }, "name", "email", "_id");
   const token = jwt.sign({ _id: user._id }, jwtSecret);
 
   const cookieOptions = {
@@ -23,13 +24,11 @@ const createSendToken = async (res, statusCode, user, isSendUser = true) => {
   };
   res.cookie("jwt", token, cookieOptions);
   user.password = undefined;
-
   const response = {
     status: "success",
     token: token,
-    data: isSendUser ? user ?? {} : null,
+    data: isSendUser ? filteredObj ?? {} : null,
   };
-
   return res.status(statusCode).json(response);
 };
 

@@ -107,7 +107,13 @@ function isValidObjKeyVal(obj, ...keys) {
 const filterObjKey = (obj, ...allowedFields) => {
   const newObj = {};
   Object.keys(obj).forEach((el) => {
-    if (allowedFields.includes(el)) newObj[el] = obj[el];
+    if (allowedFields.includes(el)) {
+      if (el === "_id") {
+        newObj[el] = obj[el].toString(); // Convert ObjectId to string
+      } else {
+        newObj[el] = obj[el];
+      }
+    }
   });
   return newObj;
 };
