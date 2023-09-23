@@ -1,6 +1,7 @@
 const express = require("express");
 const userRoute = require("./routes/userRouter");
 const mongoose = require("mongoose");
+const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -18,6 +19,14 @@ const cloudinary = require("cloudinary").v2;
 
 const app = express();
 
+// global middleware
+const limiter = rateLimit({
+  max: 3, // maximum rate limit
+  windowMs: 60 * 60 * 1000, //1hr
+  message: "To many requests form this IP address, Please try again in an hour",
+});
+
+app.use("/api/v1", limiter);
 //An uncaught exception occurs when an error is thrown but not caught by any surrounding try-catch block or error handling mechanism,allows you to define custom behavior for handling such exceptions.
 process.on("uncaughtException", (err) => {
   console.error(err.name, err.message);
@@ -54,7 +63,9 @@ const UploadImg = async (req, res) => {
 //   console.log("req.headers", req.headers);
 //   next();
 // });
+
 // Use the body-parser middleware
+
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../modals/userModal");
-const { jwtSecret } = require("../constant");
+const { jwtSecret, UI_BASEURL } = require("../constant");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 
@@ -20,8 +20,10 @@ const protect = catchAsync(async (req, res, next) => {
   }
 
   const decodedToken = jwt.verify(token, jwtSecret);
+
   // this one to check if the user is not altered by someone\
   const CurrentUser = await User.findById(decodedToken?._id);
+
   if (!CurrentUser) {
     return next(
       new AppError("The user belongings to this token does not exist", 401),
@@ -35,32 +37,26 @@ const protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-const emailToken = async (body) => {
-  try {
-    const decoded = jwt.verify(body, jwtSecret);
-    const _id = decoded?._id;
-    if (!_id) {
-      return {
-        status: 400,
-        message: "Invalid Token",
-      };
-    }
-    await User.updateOne({ _id }, { $set: { isEmailVerified: true } });
-
-    return { status: 200 };
-  } catch (error) {
-    console.log("login ~ error: >>", error);
-    return { status: 500, message: "Internal server error" };
+const emailToken = catchAsync(async (body, res, next) => {
+  const decoded = jwt.verify(body, jwtSecret);
+  const _id = decoded?._id;
+  if (!_id) {
+    return next(new AppError("Invalid token", 400));
   }
-};
+  await User.updateOne({ _id }, { $set: { isEmailVerified: true } });
+  res.status(200).json({
+    website: `${UI_BASEURL}login`,
+    msg: "Email Verified Successfully",
+  });
+});
 
 const restrictTo = (...roles) => {
   return (req, res, next) => {
-    // roles is an array ["admin", "manager", ]
+    // roles is an array just because spread operator will make it array ["admin", "manager", ]
     if (!roles.includes(req.user.role)) {
-      return res
-        .status(403)
-        .json({ message: "You do not have permission to access this." });
+      return next(
+        new AppError("You do not have permission to access this action.", 403),
+      );
     }
     next();
   };

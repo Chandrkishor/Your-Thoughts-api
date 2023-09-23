@@ -9,25 +9,41 @@ router
   .get("/verify/:link", UserCreateAndLogin.verifyEmail)
   .post("/sign_up", UserCreateAndLogin.singUp)
   .post("/login", UserCreateAndLogin.userLogin)
-  .post("/forgot_password", UserCreateAndLogin.forgot)
-  .patch("/reset_password/:token", UserCreateAndLogin.reset)
+  .post("/forgot_password", UserCreateAndLogin.forgot) // take there email and send a mail to registered email id
+  .patch("/reset_password/:token", UserCreateAndLogin.reset) // take the reset password and secret from reset email, verify it and then update the password
   .patch("/update_my_password", protect, UserCreateAndLogin.updatePassword);
 
 router
+
+  .get("/user", protect, UserController.getMyDetail) //  for user  details
+  .patch("/update_me", protect, UserController.updateMe) // for user update
+  // both  management and user
+  .delete(
+    "/delete_me",
+    protect,
+    restrictTo("admin", "user"),
+    UserController.deleteMe,
+  )
+  // for management
   .get(
     "/users",
     protect,
     restrictTo("admin", "manager"),
     UserController.getAllUserDetails,
   )
-  .get("/user", protect, UserController.getMyDetail)
+  // for management
   .get(
     "/user/:id",
     protect,
     restrictTo("admin", "manager"),
     UserController.getUserDetail,
   )
-  .patch("/user", protect, UserController.updateOneUserDetail)
-  .delete("/user", protect, UserController.deleteOneUserDetail);
+  // for management
+  .patch(
+    "/update_user",
+    protect,
+    restrictTo("admin", "manager"),
+    UserController.updateOneUserDetail,
+  );
 
 module.exports = router;

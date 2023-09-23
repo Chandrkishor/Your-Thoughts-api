@@ -5,6 +5,7 @@ const {
   EMAIL_PASS,
   EMAIL_HOST,
   EMAIL_PORT,
+  EMAIL_RESET_SUB,
 } = require("../constant");
 
 // Function to convert HEIC to JPEG
@@ -18,7 +19,23 @@ async function convertHeicToJpeg(heicBuffer) {
   }
 }
 
-const verifyMail = async (options) => {
+const getSubAndMsg = (opts) => {
+  const resetURL = `${opts?.baseUrl}reset_password/${opts.token}`;
+
+  if (opts?.type === "resetToken")
+    return {
+      message: `Forgot your password? Submit a patch request to reset your password with a new password and confirm-password at: ${resetURL}.\nIf you did not forget your password, please ignore this email.\nThank you - Your Thoughts`,
+      subject: EMAIL_RESET_SUB,
+    };
+  else if (opts?.type === "verifyEmail") {
+    return {
+      message: `Please verify your email by clicking the link below:\n${opts.baseUrl}/${opts.token}\nIf you have already done this, please ignore this email.\nThank you - Your Thoughts`,
+      subject: "Verify your email!!!",
+    };
+  }
+};
+
+const sendVerifyMail = async (options) => {
   let transporter = nodemailer.createTransport({
     host: EMAIL_HOST,
     port: EMAIL_PORT,
@@ -27,6 +44,9 @@ const verifyMail = async (options) => {
       pass: EMAIL_PASS,
     },
   });
+
+  let SubAndMsg = getSubAndMsg(options);
+
   let template = `<html>
                         <head>
                         <meta charset="UTF-8">
@@ -48,11 +68,8 @@ const verifyMail = async (options) => {
   let mailDetails = {
     from: EMAIL_USER,
     to: options.email,
-    subject: options.subject,
-    text: options.message, // THIS IS THE MESSAGE WHICH WE WANT TO SEND TO THE CLIENT
-    // html: template
-    //   .replace("{{verification_link}}", vlink)
-    //   .replace("{{name}}", name),
+    subject: SubAndMsg.subject,
+    text: SubAndMsg.message,
   };
   let sendReceipt = await transporter.sendMail(mailDetails);
   return {
@@ -97,7 +114,7 @@ const filterObjKey = (obj, ...allowedFields) => {
 
 module.exports = {
   convertHeicToJpeg,
-  verifyMail,
+  sendVerifyMail,
   isValidObjKeyVal,
   filterObjKey,
 };
