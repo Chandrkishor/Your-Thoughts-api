@@ -10,8 +10,8 @@ const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    minlength: [2, "Name must have grater or equal than 2 characters"],
-    maxlength: [40, "Name must have less or equal than 40 characters"],
+    minlength: [2, "Name must have greater 2 characters"],
+    maxlength: [40, "Name must have less 40 characters"],
     validate: {
       validator: function (value) {
         return validator.isAlphanumeric(value.replace(/\s/g, "")); // Removes spaces and checks if it's alphanumeric
