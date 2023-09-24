@@ -2,7 +2,7 @@ const express = require("express");
 const UserController = require("../controllers/userController");
 const UserCreateAndLogin = require("../controllers/Sign_In_UpController");
 const { restrictTo, protect } = require("../controllers/authController");
-
+const PostController = require("../controllers/postController");
 const router = express.Router();
 
 router
@@ -14,7 +14,6 @@ router
   .patch("/update_my_password", protect, UserCreateAndLogin.updatePassword);
 
 router
-
   .get("/user", protect, UserController.getMyDetail) //  for user  details
   .patch("/update_me", protect, UserController.updateMe) // for user update
   // both  management and user
@@ -45,5 +44,9 @@ router
     restrictTo("admin", "manager"),
     UserController.updateOneUserDetail,
   );
+
+router
+  .post("/create_post", protect, PostController.createPost)
+  .patch("/update_post/:id", protect, PostController.updatePost);
 
 module.exports = router;

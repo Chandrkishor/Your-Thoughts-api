@@ -45,13 +45,13 @@ const singUp = catchAsync(async (req, res, next) => {
     !isValidObjKeyVal(userData, "name", "email", "password", "confirmPassword")
       ?.valid
   ) {
-    next(new AppError(`Please fill all the required fields`, 400));
+    return next(new AppError(`Please fill all the required fields`, 400));
   }
 
   // Check if the email address already exists
   const existingUser = await User.findOne({ email: userData.email });
   if (existingUser) {
-    next(new AppError(`The email address already exists`, 409));
+    return next(new AppError(`The email address already exists`, 409));
   }
   // Create a new user
   let newUser = await User.create(userData);
